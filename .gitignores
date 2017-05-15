@@ -1,8 +1,8 @@
 # Windows and Mac OS
-out/*
+out/
 
 # Windows
-.vs/*
+.vs/
 
 # Mac OS
 *.DS_Store
