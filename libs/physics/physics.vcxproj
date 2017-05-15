@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6EFFD8AD-A1D3-45A0-B005-CF6AFF370113}</ProjectGuid>
+    <ProjectGuid>{31D7A9FA-89C2-4C4E-BB30-2E28F232842C}</ProjectGuid>
     <RootNamespace>physics</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
