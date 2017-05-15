@@ -3,6 +3,7 @@ out/
 
 # Windows
 .vs/
+*.VC.db
 
 # Mac OS
 *.DS_Store
