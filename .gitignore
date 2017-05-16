@@ -4,6 +4,7 @@ out/
 # Windows
 .vs/
 *.VC.db
+*.VC.opendb
 
 # Mac OS
 *.DS_Store
