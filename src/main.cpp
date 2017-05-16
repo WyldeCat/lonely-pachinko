@@ -1,8 +1,10 @@
 #include <iostream>
+#include "phy_engine.hpp"
+
+using namespace std;
 
 int main()
 {
-	std::cout << "Hello, world!" << std::endl;
-	std::cout << "Hello, world!" << std::endl;
+	print();
 	return 0;
 }

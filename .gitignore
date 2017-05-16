@@ -1,9 +1,11 @@
 # Windows and Mac OS
 out/
+libs/physics-engine/out/
 
 # Windows
 .vs/
 *.VC.db
+*.VC.opendb
 
 # Mac OS
 *.DS_Store
