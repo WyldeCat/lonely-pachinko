@@ -71,16 +71,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)\libs\physics-engine\out\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\libs\physics-engine\out\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(Platform)\asdf\</IntDir>
+    <IntDir>$(SolutionDir)\libs\physics-engine\out\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\libs\physics-engine\out\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)\libs\physics-engine\out\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\libs\physics-engine\out\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)\libs\physics-engine\out\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\libs\physics-engine\out\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -143,6 +150,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\phy_engine.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\phy_engine.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
