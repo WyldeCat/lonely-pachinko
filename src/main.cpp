@@ -1,10 +1,7 @@
-#include <iostream>
-#include "phy_engine.hpp"
+#include "header.hpp"
 
-using namespace std;
-
-int main()
+int main(int argc, char* argv[])
 {
-	print();
-	return 0;
+  std::cout << "Still hello, world.." << std::endl;
+  return 0;
 }
