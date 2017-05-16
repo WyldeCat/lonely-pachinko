@@ -1,5 +1,7 @@
 # Windows and Mac OS
 out/
+libs/physics-engine/out/
+x64/
 
 # Windows
 .vs/
