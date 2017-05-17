@@ -13,8 +13,8 @@
   #include <GL/glu.h>
 #endif
 
-/* Physics engine */
-//#include "../libs/physics-engine/src/phy_engine.hpp"
+/* Simulator */
+#include "simulator.hpp"
 
 /* Else */
 #include <iostream>
