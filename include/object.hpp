@@ -17,20 +17,20 @@ public:
   virtual void Draw();
 private:
 
-}
+};
 
 class Face : public Object /* */ {
 public:
   virtual void Draw();
 private:
 
-}
+};
 
 class Mesh : public Object {
 public:
   virtual void Draw();
 private:
   // continer<Face_ptr> faces;
-}
+};
 
 #endif

@@ -2,6 +2,10 @@
 
 int main(int argc, char* argv[])
 {
-  std::cout << "Still hello, world.." << std::endl;
-  return 0;
+    Simulator simulator(640, 480, "lonely_pachinko");
+    
+    if (simulator.Initialize("test")) {
+        simulator.Start();
+    }
+    return 0;
 }
