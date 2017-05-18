@@ -1,7 +1,5 @@
 #include "simulator.hpp"
 
-#include <iostream>
-
 Simulator::Simulator(int width, int height, const char *title)
 {
     window_ = NULL;
@@ -70,17 +68,20 @@ bool Simulator::Initialize(const std::string& xml_url)
     }
 
     // test codes
-    vertices_ = std::vector<glm::vec3>{
-        glm::vec3(-0.5f, -0.5f, 0.f),
-        glm::vec3(0.5f, -0.5f, 0.f),
-        glm::vec3(0.5f, 0.5f, 0.f)
-    };
+	vertices_.push_back(glm::vec3(-0.5f, -0.5f, 0.0f));
+	vertices_.push_back(glm::vec3(0.5f, -0.5f, 0.0f));
+	vertices_.push_back(glm::vec3(0.0f, 0.5f, 0.0f));
     //
+	
+	// glCreateBuffers(1, &vertex_buffer_object_);
+	// glNamedBufferData(vertex_buffer_object_, vertices_.size() * sizeof(glm::vec3),
+	//     &vertices_[0], GL_STATIC_DRAW);
+	// iris 6100 doesn't support opengl 4.5 on windows
 
-    glCreateBuffers(1, &vertex_buffer_object_);
-    // test codes
-    glNamedBufferData(vertex_buffer_object_, vertices_.size() * sizeof(glm::vec3),
-        &vertices_[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &vertex_buffer_object_);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
+	// test codes
+	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_DRAW);
 
     return true;
 }
@@ -117,6 +118,6 @@ void Simulator::pause()
 
 bool Simulator::check_program()
 {
-    // TODO : Not implemented
+	// TODO : Not implemented
     return true;
 }

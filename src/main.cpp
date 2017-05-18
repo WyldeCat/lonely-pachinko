@@ -7,5 +7,6 @@ int main(int argc, char* argv[])
     if (simulator.Initialize("test")) {
         simulator.Start();
     }
+
     return 0;
 }
