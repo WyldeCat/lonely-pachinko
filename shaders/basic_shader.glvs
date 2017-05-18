@@ -2,9 +2,11 @@
 
 layout(location=0) in vec3 position;
 
-uniform mat4 matView;
-uniform mat4 matProj;
+uniform mat4 wld2cam;
 
 void main() {
-	gl_Position = vec4(position, 1.f);
+    vec4 position_f = vec4(position, 1.0f);
+    //gl_Position = position_f;
+	gl_Position = vec4(dot(wld2cam[0],position_f), dot(wld2cam[1], position_f),
+        dot(wld2cam[2], position_f), dot(wld2cam[3], position_f));
 }

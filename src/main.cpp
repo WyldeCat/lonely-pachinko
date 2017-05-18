@@ -2,9 +2,9 @@
 
 int main(int argc, char* argv[])
 {
-    Simulator simulator(640, 480, "lonely_pachinko");
+    Simulator simulator(720, 720, "lonely_pachinko");
     
-    if (simulator.Initialize("test")) {
+    if (simulator.Initialize("test.xml")) {
         simulator.Start();
     }
 

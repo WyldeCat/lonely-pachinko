@@ -36,22 +36,23 @@ public:
 
 private:
     bool check_program();
+    
+    void calc_camera(glm::mat4 &, glm::vec3 &n, glm::vec3 &v, glm::vec3 &pos);
     void render();
     void pause();
 
     int frame_;
   
-    // glfw
     GLFWwindow* window_;
     
-    // glew
     GLuint shader_program_; 
     GLuint vertex_buffer_object_;
 
-    // for test
-    std::vector<glm::vec3> vertices_; 
+    glm::mat4 camera_;
     std::vector<std::unique_ptr<Object>> objects_;
 
+    // for test
+    std::vector<glm::vec3> vertices_;
 };
 
 #endif
