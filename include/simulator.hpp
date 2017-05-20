@@ -17,6 +17,9 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <functional>
+
+#include <iostream>
 
 /* custom class */
 #include "object.hpp"
@@ -24,24 +27,36 @@
 
 class Simulator {
 public:
-    Simulator(int w, int h, const char* title); 
     // create GL Context
+    Simulator() {}
+    ~Simulator() {}
 
-    ~Simulator();
-  
-    bool Initialize(const std::string& xml_url); 
+    void Init(int width, int height, const char* title);
+
     // load xml initalizing objects
                                               
-    void Start();
+    static void Start();
+    static bool Initialize(const std::string& xml_url);
+    static void KeyCallback(int key, int scancode, int action, int mods);
+    static void MouseMovCallback(double x, double y);
+    static void Release();
 
 private:
+    static Simulator* instance;
+    Simulator(int w, int h, const char* title);
+
+    void start();
+    bool initialize(const std::string& xml_url);
+    void key_callback(int key, int scancode, int action, int mods);
+    void mouse_mov_callback(double x, double y);
+   
+    void process_input();
     bool check_program();
     
     void calc_camera(glm::mat4 &, glm::vec3 &n, glm::vec3 &v, glm::vec3 &pos);
     void render();
     void pause();
 
-    int frame_;
   
     GLFWwindow* window_;
     
@@ -49,7 +64,24 @@ private:
     GLuint vertex_buffer_object_;
 
     glm::mat4 camera_;
+    glm::mat4 world_;
+    
+    glm::mat4 T_;
+    glm::mat4 Rx_;
+    glm::mat4 Ry_;
+    glm::mat4 Rz_;
+
+    glm::vec3 pos_;
+    glm::vec3 target_;
+    glm::vec3 view_up_;
+
     std::vector<std::unique_ptr<Object>> objects_;
+
+    GLdouble prev_x;
+    GLdouble prev_y;
+
+    short key_stat[300]; // GL_PRESS, GL_REPEAT, GL_RELEASE
+    bool first_touch;
 
     // for test
     std::vector<glm::vec3> vertices_;

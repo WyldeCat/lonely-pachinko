@@ -27,7 +27,9 @@
     <ClInclude Include="include\header.hpp" />
     <ClInclude Include="include\object.hpp" />
     <ClInclude Include="include\shader.hpp" />
-    <ClInclude Include="include\simulator.hpp" />
+    <ClInclude Include="include\simulator.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\basic_shader.glfs">
