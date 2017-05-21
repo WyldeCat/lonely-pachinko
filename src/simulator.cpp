@@ -1,3 +1,7 @@
+//
+// simulator.cpp
+//
+
 #include "simulator.hpp"
 
 #define _key_on(key) (key == GLFW_PRESS || key == GLFW_REPEAT )
@@ -15,9 +19,9 @@ void mouse_mov_callback(GLFWwindow* window, double x, double y)
     Simulator::MouseMovCallback(x, y);
 }
 
-void Simulator::Init(int w, int h, const char* title)
+void Simulator::Init(int w, int h, glm::vec3 pos, const char* title)
 {
-    instance = new Simulator(w, h, title);
+    instance = new Simulator(w, h, pos, title);
 }
 
 void Simulator::Release()
@@ -145,7 +149,7 @@ void Simulator::mouse_mov_callback(double x, double y)
     process_input();
 }
 
-Simulator::Simulator(int width, int height, const char *title)
+Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
 {
     window_ = NULL;
 
@@ -153,7 +157,7 @@ Simulator::Simulator(int width, int height, const char *title)
         // TODO : error log
         exit(EXIT_FAILURE);
     }
-
+   
     window_ = glfwCreateWindow(width, height, title, NULL, NULL);
 
     if (!window_) {
@@ -166,10 +170,22 @@ Simulator::Simulator(int width, int height, const char *title)
     glfwSetKeyCallback(window_, ::key_callback);
     glfwSetCursorPosCallback(window_, ::mouse_mov_callback);
 
-    target_ = glm::vec3(0, 0, 0);
+    glewInit();
+
+    glClearColor(0, 0, 0, 1);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE); // just for sure
+                            //glDisable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
+    glPolygonMode(GL_FRONT, GL_FILL);
+    glPolygonMode(GL_BACK, GL_LINE);
+
+
+    target_ = glm::vec3(0, 0, -1);
     view_up_ = glm::normalize(glm::vec3(0, 1, 0));
-    pos_ = glm::vec3(1, 0, 1);
-    axis_horz = glm::vec3(1, 0, -1);
+    pos_ = pos;
+    axis_horz = glm::vec3(1, 0, 0);
     axis_horz = glm::normalize(axis_horz);
     axis_vert = glm::vec3(0, 1, 0);
     axis_vert = glm::normalize(axis_vert);
@@ -197,28 +213,26 @@ bool Simulator::Initialize(const std::string& xml_url)
     return instance->initialize(xml_url);
 }
 
-bool Simulator::initialize(const std::string& xml_url)
+void Simulator::load_shaders(const pugi::xml_node& shader_list)
 {
-    glewInit();
-
-    glClearColor(0, 0, 0, 1);
-    
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE); // just for sure
-    //glDisable(GL_CULL_FACE);
-    glFrontFace(GL_CCW);
-    glPolygonMode(GL_FRONT, GL_FILL);
-    glPolygonMode(GL_BACK, GL_LINE);
-
     std::vector<std::unique_ptr<Shader>> shaders;
-    
-    // test codes
-    shaders.push_back(std::make_unique<Shader>(GL_VERTEX_SHADER,
-        "shaders/basic_shader.glvs"));
-    shaders.push_back(std::make_unique<Shader>(GL_FRAGMENT_SHADER,
-        "shaders/basic_shader.glfs"));
-    //
-    
+
+    for (auto shader = shader_list.child("shader"); shader;
+        shader = shader.next_sibling("shader")) {
+        GLenum type;
+
+        if (!strcmp("frag", shader.attribute("type").value())) {
+            type = GL_FRAGMENT_SHADER;
+        }
+        else {
+            type = GL_VERTEX_SHADER;
+        }
+
+        std::cout << "Load shader : " << shader.first_child().value() << std::endl;
+        shaders.push_back(std::make_unique<Shader>(type,
+            shader.first_child().value()));
+    }
+
     shader_program_ = glCreateProgram();
 
     std::for_each(shaders.begin(), shaders.end(),
@@ -232,6 +246,42 @@ bool Simulator::initialize(const std::string& xml_url)
         [&](std::unique_ptr<Shader>& ptr) {
         glDetachShader(shader_program_, ptr->GetShader());
     });
+}
+
+void Simulator::load_objects(const pugi::xml_node& obj_list)
+{
+    for (auto object = obj_list.child("object"); object;
+        object = object.next_sibling()) {
+        if (!strcmp("mesh", object.attribute("type").value())) {
+            objects_.push_back(
+                std::unique_ptr<Object>(new Mesh(object.child("file").first_child().value())
+            ));
+        }
+    }
+}
+
+void Simulator::load_lights(const pugi::xml_node& light_list)
+{
+
+}
+
+bool Simulator::initialize(const std::string& xml_url)
+{
+    pugi::xml_document doc;
+    pugi::xml_parse_result result = doc.load_file("config.xml");
+
+    auto simulator = doc.child("simulator");
+    auto shader_list = simulator.child("shader-list");
+    auto object_list = simulator.child("object-list");
+    auto light_list = simulator.child("light-list");
+
+    int scale = simulator.attribute("scale").as_int();
+
+    std::cout << "Scale : " << scale << std::endl;
+
+    load_shaders(shader_list);
+    load_objects(object_list);
+    load_lights(light_list);
 
     if (!check_program()) {
         // TODO : error log
@@ -257,6 +307,7 @@ bool Simulator::initialize(const std::string& xml_url)
       glm::vec3(10.0f, 0.0f, -20.0f),
       glm::vec3(10.0f, 10.0f, -20.0f)
     };
+    
     	
 	// glCreateBuffers(1, &vertex_buffer_object_);
 	// glNamedBufferData(vertex_buffer_object_, vertices_.size() * sizeof(glm::vec3),
@@ -315,6 +366,7 @@ void Simulator::process_input()
 
     calc_camera(camera_, target_, view_up_, pos_);
 }
+
 void Simulator::calc_camera(glm::mat4 &mat, glm::vec3 &target, glm::vec3 &v,
     glm::vec3 &pos)
 {

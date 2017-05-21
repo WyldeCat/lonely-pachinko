@@ -19,7 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="libs\pugixml-1.8\src\pugixml.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\object.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\simulator.cpp" />
   </ItemGroup>
@@ -44,6 +46,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="config.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4241ACE9-30E2-489E-96E5-C91FAE0E42F1}</ProjectGuid>

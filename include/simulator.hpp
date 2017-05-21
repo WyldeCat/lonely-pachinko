@@ -7,6 +7,9 @@
 
 #include "../libs/physics-engine/src/phy_engine.hpp"
 
+/* pugi xml */
+#include "../libs/pugixml-1.8/src/pugixml.hpp"
+
 /* opengl */
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -18,7 +21,6 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
-
 #include <iostream>
 
 /* custom class */
@@ -31,10 +33,8 @@ public:
     Simulator() {}
     ~Simulator() {}
 
-    void Init(int width, int height, const char* title);
-
-    // load xml initalizing objects
-                                              
+    void Init(int width, int height, glm::vec3 pos, const char* title);
+                        
     static void Start();
     static bool Initialize(const std::string& xml_url);
     static void KeyCallback(int key, int scancode, int action, int mods);
@@ -43,13 +43,17 @@ public:
 
 private:
     static Simulator* instance;
-    Simulator(int w, int h, const char* title);
+    Simulator(int w, int h, glm::vec3 pos, const char* title);
 
     void start();
     bool initialize(const std::string& xml_url);
     void key_callback(int key, int scancode, int action, int mods);
     void mouse_mov_callback(double x, double y);
    
+    void load_shaders(const pugi::xml_node& shader_list);
+    void load_objects(const pugi::xml_node& obj_list);
+    void load_lights(const pugi::xml_node& light_list);
+
     void process_input();
     bool check_program();
     
@@ -57,7 +61,6 @@ private:
     void render();
     void pause();
 
-  
     GLFWwindow* window_;
     
     GLuint shader_program_; 

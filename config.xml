@@ -1,0 +1,22 @@
+<simulator scale = "100">
+  <object-list>
+    <object type="mesh">
+      <file>models/cow.obj</file>
+    </object>
+    <object type="mesh">
+      <file>models/bunny.obj</file>
+    </object>
+  </object-list>
+  
+  <light-list>
+    <light type="point">
+      <pos>0 0 0</pos>
+    </light>
+  </light-list>
+  
+  <shader-list>
+    <shader type="vert">shaders/basic_shader.glvs</shader>
+    <shader type="frag">shaders/basic_shader.glfs</shader>
+  </shader-list>
+  
+</simulator>
