@@ -66,14 +66,18 @@ private:
     glm::mat4 camera_;
     glm::mat4 world_;
     
-    glm::mat4 T_;
-    glm::mat4 Rx_;
+    glm::mat4 Rx_; // for camera roatation
+    glm::mat4 RRx_;
     glm::mat4 Ry_;
+    glm::mat4 RRy_;
     glm::mat4 Rz_;
+    glm::mat4 RRz_;
 
     glm::vec3 pos_;
     glm::vec3 target_;
     glm::vec3 view_up_;
+    glm::vec3 axis_vert;
+    glm::vec3 axis_horz;
 
     std::vector<std::unique_ptr<Object>> objects_;
 

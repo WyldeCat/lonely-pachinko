@@ -48,7 +48,7 @@ void print_mat(glm::mat4 &x)
 {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            std::cout << x[j][i] << ", ";
+            std::cout << x[i][j] << ", ";
         }
         std::cout << std::endl;
     }
@@ -57,14 +57,17 @@ void print_mat(glm::mat4 &x)
 
 void Simulator::mouse_mov_callback(double x, double y)
 {
+    int width, height;
+    glfwGetWindowSize(window_, &width, &height);
+
     if (first_touch) {
         first_touch = false;
-        glfwSetCursorPos(window_, 720 / 2, 720 / 2);
+        glfwSetCursorPos(window_, width / 2, height / 2);
         return;
     }
-    // TODO : Need to arrange and implement rotation
-    double delta_x = -(x - 720 / 2) / 360;
-    double delta_y = -(y - 720 / 2) / 360; 
+    
+    double delta_x = -(x - width / 2) / (width / 2);
+    double delta_y = -(y - height / 2) / (height / 2); 
     if (delta_x == 0 && delta_y == 0) return;
     
     double sin_x = glm::sin(delta_x * 90 * PI / 180);
@@ -75,78 +78,70 @@ void Simulator::mouse_mov_callback(double x, double y)
 
     glm::vec4 t;
 
-    // view_up_에 대해서 회전, 
     if (delta_y != 0) {
-        glm::vec3 axis = glm::normalize(glm::cross(target_ - pos_, view_up_));
 
-        d = glm::sqrt(axis.y * axis.y + axis.z * axis.z);
+        d = glm::sqrt(axis_horz.y * axis_horz.y + axis_horz.z * axis_horz.z);
+       
+        RRx_[1][1] = RRx_[2][2] = Rx_[1][1] =
+            Rx_[2][2] = (d != 0) ? (axis_horz.z / d) : 1;
+        RRx_[2][1] = Rx_[1][2] = (d != 0) ? (axis_horz.y / d) : 0;
+        RRx_[1][2] = Rx_[2][1] = (d != 0) ? (-axis_horz.y / d) : 0;
 
-        T_[3][0] = -pos_.x;
-        T_[3][1] = -pos_.y;
-        T_[3][2] = -pos_.z;
-
-        Rx_[1][1] = Rx_[2][2] = (d != 0) ? (axis.z / d) : 1;
-        Rx_[1][2] = (d != 0) ? (axis.y / d) : 0;
-        Rx_[2][1] = (d != 0) ? (-axis.y / d) : 0;
-
-        Ry_[0][0] = Ry_[2][2] = d;
-        Ry_[0][2] = axis.x;
-        Ry_[2][0] = -axis.x;
+        RRy_[0][0] = RRy_[2][2] = Ry_[0][0] = Ry_[2][2] = d;
+        RRy_[2][0] = Ry_[0][2] = axis_horz.x;
+        RRy_[0][2] = Ry_[2][0] = -axis_horz.x;
 
         Rz_[0][0] = Rz_[1][1] = cos_y;
         Rz_[0][1] = sin_y;
         Rz_[1][0] = -sin_y;
 
+        target_ -= pos_;
+
         t = glm::vec4(target_, 1);
-        t = glm::inverse(T_) * glm::inverse(Rx_) * glm::inverse(Ry_)
-            * Rz_ * Ry_ * Rx_ * T_ * t;
+        t = RRx_ * RRy_ * Rz_ * Ry_ * Rx_ * t;
+       
+        target_.x = t.x + pos_.x;
+        target_.y = t.y + pos_.y;
+        target_.z = t.z + pos_.z;
 
-        target_.x = t.x;
-        target_.y = t.y;
-        target_.z = t.z;
-        target_ = glm::normalize(target_);
+        view_up_ = glm::normalize(glm::cross(axis_horz, target_ - pos_));
 
-        t = glm::vec4(view_up_, 1);
-        t = glm::inverse(T_) * glm::inverse(Rx_) * glm::inverse(Ry_)
-            * Rz_ * Ry_ * Rx_ * T_ * t;
-
-        view_up_.x = t.x;
-        view_up_.y = t.y;
-        view_up_.z = t.z;
-        view_up_ = glm::normalize(view_up_);
-        std::cout << view_up_.x << ", " << view_up_.y << ", " << view_up_.z << std::endl;
     }
     if (delta_x != 0) {
-        d = glm::sqrt(view_up_.y * view_up_.y + view_up_.z * view_up_.z);
+        
+        d = glm::sqrt(axis_vert.y * axis_vert.y + axis_vert.z * axis_vert.z);
+       
+        RRx_[1][1] = RRx_[2][2] = Rx_[1][1] =
+            Rx_[2][2] = (d != 0) ? (axis_vert.z / d) : 1;
+        RRx_[2][1] = Rx_[1][2] = (d != 0) ? (axis_vert.y / d) : 0;
+        RRx_[1][2] = Rx_[2][1] = (d != 0) ? (-axis_vert.y / d) : 0;
 
-        T_[3][0] = -pos_.x;
-        T_[3][1] = -pos_.y;
-        T_[3][2] = -pos_.z;
+        RRy_[0][0] = RRy_[2][2] = Ry_[0][0] = Ry_[2][2] = d;
+        RRy_[2][0] = Ry_[0][2] = axis_vert.x;
+        RRy_[0][2] = Ry_[2][0] = -axis_vert.x;
 
-        Rx_[1][1] = Rx_[2][2] = (d != 0) ? (view_up_.z / d) : 1;
-        Rx_[1][2] = (d != 0) ? (view_up_.y / d) : 0;
-        Rx_[2][1] = (d != 0) ? (-view_up_.y / d) : 0;
+        RRz_[0][0] = RRz_[1][1] = Rz_[0][0] = Rz_[1][1] = cos_x;
+        RRz_[1][0] = Rz_[0][1] = sin_x;
+        RRz_[0][1] = Rz_[1][0] = -sin_x;
 
-        Ry_[0][0] = Ry_[2][2] = d;
-        Ry_[0][2] = view_up_.x;
-        Ry_[2][0] = -view_up_.x;
-
-        Rz_[0][0] = Rz_[1][1] = cos_x;
-        Rz_[0][1] = sin_x;
-        Rz_[1][0] = -sin_x;
-
+        target_ -= pos_;
         t = glm::vec4(target_, 1);
-        t = glm::inverse(T_) * glm::inverse(Rx_) * glm::inverse(Ry_)
-            * Rz_ * Ry_ * Rx_ * T_ * t;
+        t = glm::inverse(Rx_) * glm::inverse(Ry_)
+            * Rz_ * Ry_ * Rx_ * t;
+        target_.x = t.x + pos_.x;
+        target_.y = t.y + pos_.y;
+        target_.z = t.z + pos_.z;
 
-        target_.x = t.x;
-        target_.y = t.y;
-        target_.z = t.z;
-        target_ = glm::normalize(target_);
-
+        t = glm::vec4(axis_horz, 1);
+        t = glm::inverse(Rx_) * glm::inverse(Ry_)
+            * Rz_ * Ry_ * Rx_ * t;
+        axis_horz.x = t.x;
+        axis_horz.z = t.z;
+        axis_horz = glm::normalize(axis_horz);
+         
     }
     
-    glfwSetCursorPos(window_, 720 / 2, 720 / 2);
+    glfwSetCursorPos(window_, width / 2, height / 2);
     process_input();
 }
 
@@ -171,9 +166,13 @@ Simulator::Simulator(int width, int height, const char *title)
     glfwSetKeyCallback(window_, ::key_callback);
     glfwSetCursorPosCallback(window_, ::mouse_mov_callback);
 
-    target_ = glm::vec3(0, 0, -1);
+    target_ = glm::vec3(0, 0, 0);
     view_up_ = glm::normalize(glm::vec3(0, 1, 0));
-    pos_ = glm::vec3(0, 0, 0);
+    pos_ = glm::vec3(1, 0, 1);
+    axis_horz = glm::vec3(1, 0, -1);
+    axis_horz = glm::normalize(axis_horz);
+    axis_vert = glm::vec3(0, 1, 0);
+    axis_vert = glm::normalize(axis_vert);
 
     calc_camera(camera_, target_, view_up_, pos_);
 
@@ -181,10 +180,12 @@ Simulator::Simulator(int width, int height, const char *title)
     world_[0][0] = world_[1][1] = world_[2][2] = 0.01;
     world_[3][3] = 1;
 
-    T_[0][0] = T_[1][1] = T_[2][2] = T_[3][3] = 1;
     Rx_[0][0] = Rx_[1][1] = Rx_[2][2] = Rx_[3][3] = 1;
+    RRx_[0][0] = RRx_[1][1] = RRx_[2][2] = RRx_[3][3] = 1;
     Ry_[1][1] = Ry_[3][3] = 1;
+    RRy_[1][1] = RRy_[3][3] = 1;
     Rz_[2][2] = Rz_[3][3] = 1;
+    RRz_[2][2] = RRz_[3][3] = 1;
 
     first_touch = true;
 
@@ -288,16 +289,28 @@ void Simulator::start()
 void Simulator::process_input()
 {
     if (_key_on(key_stat[87])) {
-        pos_.z -= 0.01;
+        glm::vec3 tmp = glm::normalize(target_ - pos_);
+        tmp *= 0.01;
+        pos_ += tmp;
+        target_ += tmp;
     }
     if (_key_on(key_stat[65])) {
-        pos_.x -= 0.01;
+        axis_horz *= 0.01;
+        pos_ -= axis_horz;
+        target_ -= axis_horz;
+        axis_horz *= 100;
     }
     if (_key_on(key_stat[83])) {
-        pos_.z += 0.01;
+        glm::vec3 tmp = glm::normalize(target_ - pos_);
+        tmp *= 0.01;
+        pos_ -= tmp;
+        target_ -= tmp;
     }
     if (_key_on(key_stat[68])) {
-        pos_.x += 0.01;
+        axis_horz *= 0.01;
+        pos_ += axis_horz;
+        target_ += axis_horz;
+        axis_horz *= 100;
     }
 
     calc_camera(camera_, target_, view_up_, pos_);
