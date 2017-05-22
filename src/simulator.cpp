@@ -282,33 +282,30 @@ bool Simulator::initialize(const std::string& xml_url)
     load_shaders(shader_list);
     load_objects(object_list);
     load_lights(light_list);
-
+    
     if (!check_program()) {
         // TODO : error log
         return false;
     }
-
-    // test codes
     
-    vertices_ = std::vector<glm::vec3>{
-      glm::vec3(0.0f, 0.0f, -10.0f),
-      glm::vec3(10.0f, 0.0f, -10.0f),
-      glm::vec3(0.0f, 10.0f, -10.0f),
-
-      glm::vec3(10.0f, 0.0f, -10.0f),
-      glm::vec3(10.0f, 10.0f, -10.0f),
-      glm::vec3(0.0f, 10.0f, -10.0f),
-
-      glm::vec3(10.0f, 0.0f, -10.0f),
-      glm::vec3(10.0f, 0.0f, -20.0f),
-      glm::vec3(10.0f, 10.0f, -10.0f),
-
-      glm::vec3(10.0f, 10.0f, -10.0f),
-      glm::vec3(10.0f, 0.0f, -20.0f),
-      glm::vec3(10.0f, 10.0f, -20.0f)
-    };
-    
-    	
+    for (auto& object : objects_)
+    {
+        auto mesh = dynamic_cast<Mesh*>(object.get());
+        if (mesh) {
+            // TODO : Need to think again
+            for (auto& face : mesh->GetFaces()) {
+                for (auto& vertex : face->GetVertices()) {
+                    // the number of vertex has to 3
+                    vertices_.push_back(vertex->pos_);
+                }
+            }
+        } else {
+            // TODO : Not implemented
+            std::cout << "not mesh!!" << std::endl;
+        }
+        
+    }
+        	
 	// glCreateBuffers(1, &vertex_buffer_object_);
 	// glNamedBufferData(vertex_buffer_object_, vertices_.size() * sizeof(glm::vec3),
 	//     &vertices_[0], GL_STATIC_DRAW);

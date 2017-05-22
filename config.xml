@@ -1,8 +1,9 @@
-<simulator scale = "100">
+<simulator scale = "10">
   <object-list>
     <object type="mesh">
       <file>models/cow.obj</file>
     </object>
+    
     <object type="mesh">
       <file>models/bunny.obj</file>
     </object>

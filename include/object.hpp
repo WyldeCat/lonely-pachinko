@@ -1,19 +1,20 @@
 //
 // object.hpp
 //
-
+ 
 #ifndef _OBJECT_HPP_
 #define _OBJECT_HPP_
-
+ 
 #include <memory>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include <iostream>
-
+ 
 #include "GLM/glm.hpp"
-
+ 
 class Object {
 // interface class
 public:
@@ -25,7 +26,7 @@ class Sphere : public Object /* */ {
 public:
     virtual void Draw();
 private:
-
+    float radius_;
 };
 
 class Vertex {
@@ -35,11 +36,31 @@ public:
     glm::vec3 normal_;
 };
 
+class Token {
+public:
+    Token(const std::string& token)
+    {
+        v_ = t_ = n_ = -1;
+        std::stringstream ss(token);
+        ss >> v_ >> t_ >> n_;
+    }
+    int v_, t_, n_;
+};
+
 class Face : public Object {
 public:
+    Face(std::vector<Token>& tokens, 
+        const std::vector<std::shared_ptr<Vertex>>& vertices,
+        const std::vector<std::shared_ptr<glm::vec3>>& normals,
+        const std::vector<std::shared_ptr<glm::vec2>>& textures);
+
     virtual void Draw();
+    const std::vector<std::shared_ptr<Vertex>>& GetVertices() { return vertices_; }
+
 private:
-    std::vector<std::shared_ptr<Vertex>> vertices;
+    std::vector<std::shared_ptr<Vertex>> vertices_;
+    std::vector<std::shared_ptr<glm::vec3>> normals_;
+    std::vector<std::shared_ptr<glm::vec2>> textures_;
 };
 
 
@@ -48,11 +69,13 @@ public:
     virtual void Draw();
     Mesh(const std::string& obj_file);
 
+    const std::vector<std::unique_ptr<Face>>& GetFaces() { return faces_; }
+
 private:
     std::vector<std::unique_ptr<Face>> faces_;
     std::vector<std::shared_ptr<Vertex>> vertices_;
 
-    std::vector<std::shared_ptr<glm::vec3>> v_normals_;
+    std::vector<std::shared_ptr<glm::vec3>> normals_;
     std::vector<std::shared_ptr<glm::vec2>> textures_;
 };
 

@@ -2,21 +2,6 @@
 
 layout(location=0) in vec3 position;
 
-struct gl_LightSourceParameters {
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
-	vec4 position;
-	vec4 halfVector;
-	vec3 spotDirection;
-	float spotExponent;
-	float spotCutoff; // (range: [0.0,90.0], 180.0)
-	float spotCosCutoff; // (range: [1.0,0.0],-1.0)
-	float constantAttenuation;
-	float linearAttenuation;
-	float quadraticAttenuation;
-};
-
 uniform mat4 wld2cam;
 uniform mat4 obj2wld;
 uniform mat4 projection = mat4(
@@ -24,8 +9,6 @@ uniform mat4 projection = mat4(
             0,2.41421,0,0,
             0,0,-1.002,-1,
             0,0,-0.2002,0);
-
-uniform gl_LightSourceParameters gl_LightSource[10];
 
 void main() 
 {

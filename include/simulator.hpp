@@ -33,7 +33,7 @@ public:
     Simulator() {}
     ~Simulator() {}
 
-    void Init(int width, int height, glm::vec3 pos, const char* title);
+    static void Init(int width, int height, glm::vec3 pos, const char* title);
                         
     static void Start();
     static bool Initialize(const std::string& xml_url);
@@ -90,8 +90,7 @@ private:
     short key_stat[300]; // GL_PRESS, GL_REPEAT, GL_RELEASE
     bool first_touch;
 
-    // for test
-    std::vector<glm::vec3> vertices_;
+    std::vector<glm::vec3> vertices_; // static vertex
 };
 
 #endif
