@@ -83,7 +83,6 @@ void Simulator::mouse_mov_callback(double x, double y)
     glm::vec4 t;
 
     if (delta_y != 0) {
-
         d = glm::sqrt(axis_horz.y * axis_horz.y + axis_horz.z * axis_horz.z);
        
         RRx_[1][1] = RRx_[2][2] = Rx_[1][1] =
@@ -112,7 +111,6 @@ void Simulator::mouse_mov_callback(double x, double y)
 
     }
     if (delta_x != 0) {
-        
         d = glm::sqrt(axis_vert.y * axis_vert.y + axis_vert.z * axis_vert.z);
        
         RRx_[1][1] = RRx_[2][2] = Rx_[1][1] =
@@ -292,11 +290,14 @@ bool Simulator::initialize(const std::string& xml_url)
     {
         auto mesh = dynamic_cast<Mesh*>(object.get());
         if (mesh) {
-            // TODO : Need to think again
+            // TODO : It only supports vertex with normal
             for (auto& face : mesh->GetFaces()) {
-                for (auto& vertex : face->GetVertices()) {
+                auto vertex = face->GetVertices().begin();
+                auto normal = face->GetNormals().begin();
+                for (;vertex != face->GetVertices().end(); vertex++, normal++) {
                     // the number of vertex has to 3
-                    vertices_.push_back(vertex->pos_);
+                    vertices_.push_back((*vertex)->pos_);
+                    vertices_.push_back(*(*normal));
                 }
             }
         } else {
@@ -401,9 +402,10 @@ void Simulator::render()
     glUniformMatrix4fvARB(loc_wld, 1, true, &world_[0][0]);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, NULL);
-
+    glEnableVertexAttribArray(0); // vertex pos
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(1); // vertex normal
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
     // test code
     glDrawArrays(GL_TRIANGLES, 0, vertices_.size());
 

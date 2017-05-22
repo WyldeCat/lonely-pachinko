@@ -40,9 +40,21 @@ class Token {
 public:
     Token(const std::string& token)
     {
+        char t, f;
+        std::string ttt;
         v_ = t_ = n_ = -1;
         std::stringstream ss(token);
-        ss >> v_ >> t_ >> n_;
+        ss >> v_ >> t >>  t_ >> t >> n_;
+        if (ss.fail()) {
+            ss.clear();
+            ss.str(token);
+            ss >> v_ >> t >> f >> n_;
+            if (ss.fail()) {
+                ss.clear();
+                ss.str(token);
+                ss >> v_;
+            }
+        }
     }
     int v_, t_, n_;
 };
@@ -55,7 +67,10 @@ public:
         const std::vector<std::shared_ptr<glm::vec2>>& textures);
 
     virtual void Draw();
+
     const std::vector<std::shared_ptr<Vertex>>& GetVertices() { return vertices_; }
+    const std::vector<std::shared_ptr<glm::vec3>>& GetNormals() { return normals_; }
+    const std::vector<std::shared_ptr<glm::vec2>>& GetTextures() { return textures_; }
 
 private:
     std::vector<std::shared_ptr<Vertex>> vertices_;

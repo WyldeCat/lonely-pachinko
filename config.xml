@@ -3,10 +3,11 @@
     <object type="mesh">
       <file>models/cow.obj</file>
     </object>
-    
+    <!--
     <object type="mesh">
       <file>models/bunny.obj</file>
     </object>
+    -->
   </object-list>
   
   <light-list>
