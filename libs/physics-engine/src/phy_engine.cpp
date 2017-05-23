@@ -1,8 +1,5 @@
-//http://www.defold.com/manuals/physics/?lang=ko
-
-
-#include<iostream>
-#include "phy_engine.hpp"
+#include <iostream>
+#include "pmframework.hpp"
 
 namespace phyEngine {
 	class Object
@@ -37,6 +34,11 @@ namespace phyEngine {
 		
 	};
 }
+
+
+
+
+
 /*
 	namespace dynamics {
 		namespace rigid {

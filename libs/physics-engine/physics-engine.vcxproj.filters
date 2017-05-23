@@ -18,15 +18,42 @@
     <ClCompile Include="src\phy_engine.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="src\particle_bounce.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="src\collision.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="src\point_mass.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rigid_body.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\phy_engine.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="src\vector.hpp">
+    <ClInclude Include="src\collision.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="src\matrix.hpp">
+    <ClInclude Include="src\math.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\point_mass.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pmframework.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3d_angle_set.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rigid_body.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\force.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
