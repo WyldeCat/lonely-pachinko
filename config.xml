@@ -1,7 +1,7 @@
-<simulator scale = "10">
+<simulator scale = "50">
   <object-list>
     <object type="mesh">
-      <file>models/cow.obj</file>
+      <file>models/teapot.obj</file>
     </object>
     <!--
     <object type="mesh">
@@ -12,7 +12,17 @@
   
   <light-list>
     <light type="point">
-      <pos>0 0 0</pos>
+      <pos>3.0 3.0 3.0</pos>
+      <ambient>0.0 0.0 0.0 1.0</ambient>
+      <diffuse>1.0 0.1 0.1 1.0</diffuse>
+      <specular>1.0 0.1 0.1 1.0</specular>
+    </light>
+    <light type="spot">
+      <pos>7.0 7.0 7.0</pos>
+      <dir>-1.0 0.0 0.0</dir>
+      <ambient>0.0 0.0 0.0 1.0</ambient>
+      <diffuse>0.1 0.1 1.0 1.0</diffuse>
+      <specular>0.1 0.1 1.0 1.0</specular>
     </light>
   </light-list>
   

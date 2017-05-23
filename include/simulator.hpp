@@ -52,7 +52,6 @@ private:
    
     void load_shaders(const pugi::xml_node& shader_list);
     void load_objects(const pugi::xml_node& obj_list);
-    void load_lights(const pugi::xml_node& light_list);
 
     void process_input();
     bool check_program();

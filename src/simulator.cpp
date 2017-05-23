@@ -173,11 +173,11 @@ Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
     glClearColor(0, 0, 0, 1);
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE); // just for sure
-                            //glDisable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE); // just for sure
+    glDisable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
     glPolygonMode(GL_FRONT, GL_FILL);
-    glPolygonMode(GL_BACK, GL_LINE);
+    glPolygonMode(GL_BACK, GL_FILL);
 
 
     target_ = glm::vec3(0, 0, -1);
@@ -250,17 +250,12 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
 {
     for (auto object = obj_list.child("object"); object;
         object = object.next_sibling()) {
-        if (!strcmp("mesh", object.attribute("type").value())) {
+        if (!strcmp(object.attribute("type").value(), "mesh")) {
             objects_.push_back(
                 std::unique_ptr<Object>(new Mesh(object.child("file").first_child().value())
             ));
         }
     }
-}
-
-void Simulator::load_lights(const pugi::xml_node& light_list)
-{
-
 }
 
 bool Simulator::initialize(const std::string& xml_url)
@@ -271,7 +266,6 @@ bool Simulator::initialize(const std::string& xml_url)
     auto simulator = doc.child("simulator");
     auto shader_list = simulator.child("shader-list");
     auto object_list = simulator.child("object-list");
-    auto light_list = simulator.child("light-list");
 
     int scale = simulator.attribute("scale").as_int();
 
@@ -279,7 +273,6 @@ bool Simulator::initialize(const std::string& xml_url)
 
     load_shaders(shader_list);
     load_objects(object_list);
-    load_lights(light_list);
     
     if (!check_program()) {
         // TODO : error log

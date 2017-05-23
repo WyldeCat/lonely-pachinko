@@ -1,12 +1,82 @@
 #version 440
 
+struct LightSource
+{
+  vec4 position;
+  vec4 diffuse;
+  vec4 specular;
+  float constantAttenuation, linearAttenuation, quadraticAttenuation;
+  float spotCutoff, spotExponent;
+  vec3 spotDirection;
+};
+
+const int num_of_lights = 2;
+
+LightSource lights[num_of_lights];
+LightSource light0 = LightSource(
+  vec4(0.0,  1.0,  2.0, 1.0),
+  vec4(1.0,  1.0,  1.0, 1.0),
+  vec4(1.0,  1.0,  1.0, 1.0),
+  0.0, 1.0, 0.0,
+  180.0, 0.0,
+  vec3(0.0, 0.0, 0.0)
+);
+
+LightSource light1 = LightSource(
+    vec4(0.0, -2.0,  0.0, 1.0),
+    vec4(2.0,  0.0,  0.0, 1.0),
+    vec4(0.1,  0.1,  0.1, 1.0),
+    0.0, 1.0, 0.0,
+    80.0, 10.0,
+    vec3(0.0, 1.0, 0.0)
+);
+
+vec4 scene_ambient = vec4(0.2, 0.2, 0.2, 1.0);
+
+struct Material
+{
+  vec4 ambient;
+  vec4 diffuse;
+  vec4 specular;
+  float shininess;
+};
+
+Material frontMaterial = Material(
+  vec4(0.2, 0.2, 0.2, 1.0),
+  vec4(1.0, 0.8, 0.8, 1.0),
+  vec4(1.0, 1.0, 1.0, 1.0),
+  5.0
+);
+
 out vec4 color;
 in vec3 v_normal;
+in vec4 v_pos;
 
 void main() {
+    lights[0] = light0;
+    lights[1] = light1;
+
+    vec3 normal_direction = normalize(v_normal);
+    // TODO : What is v_inv
+    vec3 view_direction = normalize(vec3(v_inv * vec4(0.0, 0.0, 0.0, 1.0) - position));
+    vec3 light_direction;
+    float attenuation;
+    vec3 total_lighting = vec3(scene_ambient) * vec3(frontMaterial.ambient);
+
+    for (int i = 0; i < num_of_lights; i++) {
+        if (lights[i].position.w == 0.0) { // directional light
+            attenuation = 1.0;
+            light_direction = normalize(vec3(lights[i].position));
+        } else {
+            vec3 pos_light_src = vec3(lights[i].position - position);
+            // TODO
+        }
+    }
     vec4 I = vec4(0.8, 0.5, 0.5, 1.0);
     vec3 light_dir = normalize(vec3(0.3, 0.3, 0.3));
    
     // TODO : Complete light equation
-    color = I * dot(v_normal, light_dir) * 0.3 + vec4(0.2, 0.8, 0.8, 1);
+    color = I * dot(v_normal, light_dir);
 }
+
+// Reference : https://en.wikibooks.org/wiki/GLSL_Programming/GLUT/Multiple_Lights
