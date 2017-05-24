@@ -1,0 +1,71 @@
+#version 440
+
+layout(binding = 0, rgba32f) uniform image2D framebuffer;
+// wrriten by compute shader
+
+layout (local_size_x = 8, local_size_y = 8) in;
+
+
+uniform vec3 eye;
+uniform vec3 ray00;
+uniform vec3 ray10;
+uniform vec3 ray01;
+uniform vec3 ray11;
+
+// camera specification
+// ray will be interpolated for each pixel
+
+struct triangle {
+    vec3 points[3];
+};
+
+struct sphere {
+    vec3 pos;
+    float r;
+};
+
+struct hitinfo {
+    vec2 lambda;
+    int idx;
+};
+
+vec2 intersect_triangle(vec3 origin, vec3 dir, const triangle t)
+{
+    // TODO : Not implemented
+    return vec2(0.0, 0.0);
+}
+
+vec2 intersect_sphere(vec3 origin, vec3 dir, const sphere s)
+{
+    // TODO : Not implemented
+    return vec2(0.0, 0.0);
+}
+
+bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
+{
+    return true;
+}
+
+vec4 trace(vec3 origin, vec3 dir)
+{
+    hitinfo info;
+    if (intersect_objects(origin, dir, info)) {
+        vec4 gray = vec4(info.idx/10.0 + 0.8);
+        return vec4(gray.rgb, 1.0);
+    }
+    return vec4(0.0, 0.0, 0.0, 0.0);
+}
+
+void main() 
+{
+    ivec2 pix = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(framebuffer);
+    if (pix.x >= size.x || pix.y >= size.y) return;
+
+    vec2 pos = vec2(pix) / vec2(size.x, size.y);
+    vec3 dir = mix(mix(ray00, ray01, pos.y), mix(ray10, ray11, pos.y), pos.x);
+    vec4 color = trace(eye, dir);
+    imageStore(framebuffer, pix, color);
+}
+
+// Reference : https://github.com/LWJGL/lwjgl3-wiki/wiki/2.6.1.-Ray-tracing-with-OpenGL-Compute-Shaders-%28Part-I%29

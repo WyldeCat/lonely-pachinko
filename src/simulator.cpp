@@ -61,17 +61,15 @@ void print_mat(glm::mat4 &x)
 
 void Simulator::mouse_mov_callback(double x, double y)
 {
-    int width, height;
-    glfwGetWindowSize(window_, &width, &height);
 
     if (first_touch) {
         first_touch = false;
-        glfwSetCursorPos(window_, width / 2, height / 2);
+        glfwSetCursorPos(window_, width_ / 2, height_ / 2);
         return;
     }
     
-    double delta_x = -(x - width / 2) / (width / 2);
-    double delta_y = -(y - height / 2) / (height / 2); 
+    double delta_x = -(x - width_ / 2) / (width_ / 2);
+    double delta_y = -(y - height_ / 2) / (height_ / 2); 
     if (delta_x == 0 && delta_y == 0) return;
     
     double sin_x = glm::sin(delta_x * 90 * PI / 180);
@@ -143,11 +141,13 @@ void Simulator::mouse_mov_callback(double x, double y)
          
     }
     
-    glfwSetCursorPos(window_, width / 2, height / 2);
+    glfwSetCursorPos(window_, width_ / 2, height_ / 2);
     process_input();
 }
 
 Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
+    : width_(width)
+    , height_(height)
 {
     window_ = NULL;
 
@@ -222,8 +222,11 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
         if (!strcmp("frag", shader.attribute("type").value())) {
             type = GL_FRAGMENT_SHADER;
         }
-        else {
+        else if (!strcmp("vert", shader.attribute("type").value())) {
             type = GL_VERTEX_SHADER;
+        }
+        else if (!strcmp("compute", shader.attribute("type").value())) {
+            type = GL_COMPUTE_SHADER;
         }
 
         std::cout << "Load shader : " << shader.first_child().value() << std::endl;
@@ -232,17 +235,30 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
     }
 
     shader_program_ = glCreateProgram();
+    compute_program_ = glCreateProgram();
 
     std::for_each(shaders.begin(), shaders.end(),
         [&](std::unique_ptr<Shader>& ptr) {
-        glAttachShader(shader_program_, ptr->GetShader());
+        if (ptr->shader_type_ == GL_VERTEX_SHADER ||
+            ptr->shader_type_ == GL_FRAGMENT_SHADER) {
+            glAttachShader(shader_program_, ptr->GetShader());
+        } else {
+            glAttachShader(compute_program_, ptr->GetShader());
+        }
     });
 
     glLinkProgram(shader_program_);
+    glLinkProgram(compute_program_);
 
     std::for_each(shaders.begin(), shaders.end(),
         [&](std::unique_ptr<Shader>& ptr) {
-        glDetachShader(shader_program_, ptr->GetShader());
+        if (ptr->shader_type_ == GL_VERTEX_SHADER ||
+            ptr->shader_type_ == GL_FRAGMENT_SHADER) {
+            glDetachShader(shader_program_, ptr->GetShader());
+        }
+        else {
+            glDetachShader(compute_program_, ptr->GetShader());
+        }
     });
 }
 
@@ -297,17 +313,18 @@ bool Simulator::initialize(const std::string& xml_url)
             // TODO : Not implemented
             std::cout << "not mesh!!" << std::endl;
         }
-        
     }
-        	
-	// glCreateBuffers(1, &vertex_buffer_object_);
-	// glNamedBufferData(vertex_buffer_object_, vertices_.size() * sizeof(glm::vec3),
-	//     &vertices_[0], GL_STATIC_DRAW);
-	// iris 6100 doesn't support opengl 4.5 on windows
 
+    // for compute shader
+    glGenTextures(1, &texture_);
+    glBindTexture(GL_TEXTURE_2D, texture_);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width_, height_, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glBindTexture(GL_TEXTURE_2D, 0);
+     
 	glGenBuffers(1, &vertex_buffer_object_);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
-	// test codes
 	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_DRAW);
 
     return true;
@@ -322,6 +339,7 @@ void Simulator::start()
 {
     while (!glfwWindowShouldClose(window_)) {
         process_input();
+        compute();
         render();
         glfwSwapBuffers(window_);
         glfwPollEvents();
@@ -382,6 +400,12 @@ void Simulator::calc_camera(glm::mat4 &mat, glm::vec3 &target, glm::vec3 &v,
     mat = mat_tmp * mat;
 }
 
+void Simulator::compute()
+{
+    // TODO : Not implemented
+    // invoke compute shader
+}
+
 void Simulator::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -399,9 +423,11 @@ void Simulator::render()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(1); // vertex normal
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    // test code
+
+    glBindTexture(GL_TEXTURE_2D, texture_);
     glDrawArrays(GL_TRIANGLES, 0, vertices_.size());
 
+    glBindTexture(GL_TEXTURE_2D, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glDisableVertexAttribArray(0);
 

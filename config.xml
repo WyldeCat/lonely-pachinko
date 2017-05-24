@@ -29,6 +29,7 @@
   <shader-list>
     <shader type="vert">shaders/basic_shader.glvs</shader>
     <shader type="frag">shaders/basic_shader.glfs</shader>
+    <shader type="compute">shaders/compute_shader.glcs</shader>
   </shader-list>
   
 </simulator>

@@ -57,12 +57,16 @@ private:
     bool check_program();
     
     void calc_camera(glm::mat4 &, glm::vec3 &n, glm::vec3 &v, glm::vec3 &pos);
+    void compute();
     void render();
     void pause();
 
     GLFWwindow* window_;
     
     GLuint shader_program_; 
+    GLuint compute_program_;
+
+    GLuint texture_;
     GLuint vertex_buffer_object_;
 
     glm::mat4 camera_;
@@ -85,6 +89,9 @@ private:
 
     GLdouble prev_x;
     GLdouble prev_y;
+
+    int width_;
+    int height_;
 
     short key_stat[300]; // GL_PRESS, GL_REPEAT, GL_RELEASE
     bool first_touch;

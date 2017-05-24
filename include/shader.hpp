@@ -21,6 +21,7 @@ public:
     GLuint GetShader();
 
 private:
+    friend class Simulator;
     static std::string file_to_str(const std::string& source_url);
 
     bool check_shader();
