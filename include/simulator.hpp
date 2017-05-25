@@ -27,6 +27,31 @@
 #include "object.hpp"
 #include "shader.hpp"
 
+class Simulator;
+
+class Camera {
+public:
+    Camera(const glm::vec3& pos, const glm::vec3& target,
+        const glm::vec3& axis_vert, const glm::vec3& axis_horz);
+    Camera() {}
+    glm::mat4& GetMatrix();
+    void Update(const glm::vec3 &pos, const glm::vec3 &target,
+        const glm::vec3 &axis_horz);
+
+private:
+    void calculate();
+
+    friend class Simulator;
+    glm::mat4 mat_;
+
+    glm::vec3 pos_;
+    glm::vec3 view_up_;
+    glm::vec3 target_;
+    glm::vec3 axis_vert_;
+    glm::vec3 axis_horz_;
+
+};
+
 class Simulator {
 public:
     // create GL Context
@@ -56,20 +81,20 @@ private:
     void process_input();
     bool check_program();
     
-    void calc_camera(glm::mat4 &, glm::vec3 &n, glm::vec3 &v, glm::vec3 &pos);
     void compute();
     void render();
     void pause();
 
     GLFWwindow* window_;
     
+    Camera curr_camera_; // will be changed
+
     GLuint shader_program_; 
     GLuint compute_program_;
 
     GLuint texture_;
     GLuint vertex_buffer_object_;
-
-    glm::mat4 camera_;
+    
     glm::mat4 world_;
     
     glm::mat4 Rx_; // for camera roatation
@@ -78,12 +103,6 @@ private:
     glm::mat4 RRy_;
     glm::mat4 Rz_;
     glm::mat4 RRz_;
-
-    glm::vec3 pos_;
-    glm::vec3 target_;
-    glm::vec3 view_up_;
-    glm::vec3 axis_vert;
-    glm::vec3 axis_horz;
 
     std::vector<std::unique_ptr<Object>> objects_;
 
