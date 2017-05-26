@@ -355,10 +355,12 @@ bool Simulator::initialize(const std::string& xml_url)
 
     // for compute shader
     glGenTextures(1, &texture_);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width_, height_, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glBindImageTexture(0, texture_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     glBindTexture(GL_TEXTURE_2D, 0);
      
 	glGenBuffers(1, &vertex_buffer_object_);
@@ -420,8 +422,11 @@ void Simulator::process_input()
 
 void Simulator::compute()
 {
-    // TODO : Not implemented
+    glUseProgram(compute_program_);
     // invoke compute shader
+    glDispatchCompute(width_, height_, 1);
+    glUseProgram(0);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
 void Simulator::render()
@@ -432,7 +437,6 @@ void Simulator::render()
     // pass camera matrix to shader
     GLint loc_cam = glGetUniformLocationARB(shader_program_, "wld2cam");
     glUniformMatrix4fvARB(loc_cam, 1, true, &curr_camera_.mat_[0][0]);
-
     GLint loc_wld = glGetUniformLocationARB(shader_program_, "obj2wld");
     glUniformMatrix4fvARB(loc_wld, 1, true, &world_[0][0]);
 
