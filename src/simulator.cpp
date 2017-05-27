@@ -186,7 +186,6 @@ void Simulator::mouse_mov_callback(double x, double y)
         axis_horz.x = t.x;
         axis_horz.z = t.z;
         axis_horz = glm::normalize(axis_horz);
-         
     }
     
     glfwSetCursorPos(window_, width_ / 2, height_ / 2);
@@ -228,9 +227,11 @@ Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
     glPolygonMode(GL_FRONT, GL_FILL);
     glPolygonMode(GL_BACK, GL_FILL);
 
-    world_ = glm::mat4(0.0);
-    world_[0][0] = world_[1][1] = world_[2][2] = 0.01;
-    world_[3][3] = 1;
+
+    proj_ = glm::mat4{ 2.41421, 0, 0, 0,
+        0, 2.41421, 0, 0,
+        0, 0, -1.002, -1,
+        0, 0, -0.2002, 0 };
 
     Rx_[0][0] = Rx_[1][1] = Rx_[2][2] = Rx_[3][3] = 1;
     RRx_[0][0] = RRx_[1][1] = RRx_[2][2] = RRx_[3][3] = 1;
@@ -298,6 +299,16 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
             glDetachShader(compute_program_, ptr->GetShader());
         }
     });
+
+    wld_uniform_ = glGetUniformLocationARB(shader_program_, "obj2wld");
+    view_uniform_ = glGetUniformLocationARB(shader_program_, "wld2cam");
+    proj_uniform_ = glGetUniformLocationARB(shader_program_, "projection");
+
+    eye_uniform_ = glGetUniformLocationARB(compute_program_, "eye");
+    ray_uniform_[0][0] = glGetUniformLocationARB(compute_program_, "ray00");
+    ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
+    ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
+    ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
 }
 
 void Simulator::load_objects(const pugi::xml_node& obj_list)
@@ -324,6 +335,10 @@ bool Simulator::initialize(const std::string& xml_url)
     int scale = simulator.attribute("scale").as_int();
 
     std::cout << "Scale : " << scale << std::endl;
+
+    world_ = glm::mat4(0.0);
+    world_[0][0] = world_[1][1] = world_[2][2] = 1.0 / 100;
+    world_[3][3] = 1;
 
     load_shaders(shader_list);
     load_objects(object_list);
@@ -366,7 +381,7 @@ bool Simulator::initialize(const std::string& xml_url)
 	glGenBuffers(1, &vertex_buffer_object_);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
 	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_DRAW);
-
+    
     return true;
 }
 
@@ -422,11 +437,45 @@ void Simulator::process_input()
 
 void Simulator::compute()
 {
+    // HACK
+    glm::mat4 &t = curr_camera_.GetMatrix();
+    glm::vec3 pos(t[0][3], t[1][3], t[2][3]);
+    t[0][3] = t[1][3] = t[2][3] = 0;
+    glm::mat4 inv = glm::inverse(proj_ * 
+        glm::transpose(curr_camera_.GetMatrix()) * world_);
+    glm::vec4 tmp;
+
     glUseProgram(compute_program_);
+    
     // invoke compute shader
     glDispatchCompute(width_, height_, 1);
+    glUniform3f(eye_uniform_, curr_camera_.pos_.x,
+        curr_camera_.pos_.y, curr_camera_.pos_.z);
+
+    tmp = glm::normalize(inv * glm::vec4(-1, -1, 0, 1) -
+        proj_ * glm::vec4(curr_camera_.pos_, 0.0));
+    glUniform3f(ray_uniform_[0][0], tmp.x, tmp.y, tmp.z);
+
+    tmp = glm::normalize(inv * glm::vec4(1, -1, 0, 1) -
+        glm::vec4(curr_camera_.pos_, 0.0));
+    glUniform3f(ray_uniform_[1][0], tmp.x, tmp.y, tmp.z);
+
+    tmp = glm::normalize(inv * glm::vec4(-1, 1, 0, 1) -
+        glm::vec4(curr_camera_.pos_, 0.0));
+    glUniform3f(ray_uniform_[0][1], tmp.x, tmp.y, tmp.z);
+
+    tmp = glm::normalize(inv * glm::vec4(1, 1, 0, 1) -
+        glm::vec4(curr_camera_.pos_, 0.0));
+    glUniform3f(ray_uniform_[1][1], tmp.x, tmp.y, tmp.z);
+
+    // compute ray
     glUseProgram(0);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+    t[0][3] = pos[0];
+    t[1][3] = pos[1];
+    t[2][3] = pos[2];
+
 }
 
 void Simulator::render()
@@ -435,10 +484,9 @@ void Simulator::render()
     glUseProgram(shader_program_);
 
     // pass camera matrix to shader
-    GLint loc_cam = glGetUniformLocationARB(shader_program_, "wld2cam");
-    glUniformMatrix4fvARB(loc_cam, 1, true, &curr_camera_.mat_[0][0]);
-    GLint loc_wld = glGetUniformLocationARB(shader_program_, "obj2wld");
-    glUniformMatrix4fvARB(loc_wld, 1, true, &world_[0][0]);
+    glUniformMatrix4fvARB(view_uniform_, 1, true, &curr_camera_.mat_[0][0]);
+    glUniformMatrix4fvARB(wld_uniform_, 1, true, &world_[0][0]);
+    glUniformMatrix4fvARB(proj_uniform_, 1, false, &proj_[0][0]);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
     glEnableVertexAttribArray(0); // vertex pos

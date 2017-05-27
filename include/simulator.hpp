@@ -91,12 +91,20 @@ private:
 
     GLuint shader_program_; 
     GLuint compute_program_;
+    
+    GLuint wld_uniform_;
+    GLuint view_uniform_;
+    GLuint proj_uniform_;
+
+    GLuint ray_uniform_[2][2];
+    GLuint eye_uniform_;
 
     GLuint texture_;
     GLuint vertex_buffer_object_;
     
     glm::mat4 world_;
-    
+    glm::mat4 proj_;
+
     glm::mat4 Rx_; // for camera roatation
     glm::mat4 RRx_;
     glm::mat4 Ry_;

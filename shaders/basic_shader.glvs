@@ -5,17 +5,13 @@ layout(location=1) in vec3 vertex_normal;
 
 uniform mat4 wld2cam;
 uniform mat4 obj2wld;
-uniform mat4 projection = mat4(
-            2.41421,0,0,0,
-            0,2.41421,0,0,
-            0,0,-1.002,-1,
-            0,0,-0.2002,0);
+uniform mat4 projection;
 
 out vec3 v_normal;
 
 void main() 
 {
     vec4 position_f = vec4(position, 1.0f);
-    gl_Position = projection * wld2cam * obj2wld * vec4(position,1.0f);
+    gl_Position = projection * wld2cam * obj2wld * position_f;
     v_normal = vertex_normal;
 }
