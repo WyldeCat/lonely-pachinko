@@ -288,7 +288,7 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
 
     glLinkProgram(shader_program_);
     glLinkProgram(compute_program_);
-
+    std::cout << glGetError() << std::endl;
     std::for_each(shaders.begin(), shaders.end(),
         [&](std::unique_ptr<Shader>& ptr) {
         if (ptr->shader_type_ == GL_VERTEX_SHADER ||
@@ -299,6 +299,11 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
             glDetachShader(compute_program_, ptr->GetShader());
         }
     });
+    int size;
+    int infologLength = 1024, charsWritten;
+    char *infoLog = new char[infologLength];
+    glGetProgramInfoLog(compute_program_, infologLength, &charsWritten, infoLog);
+    std::cout << infoLog << std::endl;
 
     wld_uniform_ = glGetUniformLocationARB(shader_program_, "obj2wld");
     view_uniform_ = glGetUniformLocationARB(shader_program_, "wld2cam");
@@ -317,6 +322,8 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
 
     num_triangles = glGetUniformLocationARB(compute_program_, "num_triangles");
     num_spheres = glGetUniformLocationARB(compute_program_, "num_spheres");
+
+    std::cout << num_triangles << std::endl;
 }
 
 void Simulator::load_objects(const pugi::xml_node& obj_list)

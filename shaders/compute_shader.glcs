@@ -57,15 +57,11 @@ vec4 trace(vec3 origin, vec3 dir)
 {
     hitinfo info;
     int i, count = 0;
-    for (i = 0; i < num_triangles; i++) {
-        if (vertices[triangles[i].points[0]][0] 
-                == vertices[triangles[i].points[1]][1] &&
-            triangles[i].points[1] == triangles[i].points[2]) {
-            count++;
-        }
-    }
-    for (i = 0; i < num_spheres; i++) {
 
+    for (i = 0; i < num_triangles; i++) {
+    }
+
+    for (i = 0; i < num_spheres; i++) {
     }
 
     return vec4(1.0, 0.0, 0.0, 0.0);
