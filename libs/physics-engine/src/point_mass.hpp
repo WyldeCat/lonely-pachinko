@@ -1,67 +1,58 @@
 #pragma once
-#include "math.hpp"
+#include "pmframework.hpp"
 
 namespace pmframework
 {
 
-
 class PointMass
 {
-private:
-    //mesh objectMesh;
+protected:
+
+    enum { numberOfConfigurations = 2 };
 
     scalar mass;
-    Vector3d centerOfMass;
-    Vector3d linearVelocity;
-    Vector3d linearAcceleration;
-    Vector3d sumForces;
-
-    scalar radius;
     scalar restitution;
+    scalar boundingSphereRadius;
 
-    //____ worldMatrix; // transformation 계산할 행렬
+    struct configuration {
+        Vector3d position;
+        Vector3d velocity;
+        Vector3d sumForce;
+    }aConfiguration[numberOfConfigurations];
+
+    friend class Simulation;
+    friend class RigidBody;
 
 public:
-    PointMass();
-
-    bool LoadMesh(std::string meshFileName);
+    PointMass(void);
 
     void Mass(scalar massValue);
     scalar Mass(void);
     
-    void Location(Vector3d locationCenterOfMass);
-    Vector3d Location(void);
-
-    void LinearVelocity(Vector3d newVelocity);
-    Vector3d LinearVelocity(void);
-
-    void LinearAcceleration(Vector3d newAcceleration);
-    Vector3d LinearAcceleration(void);
-
-    void Force(Vector3d sumExternalForces);
-    Vector3d Force(void);
-
     void BoundingSphereRadius(scalar sphereRadius);
     scalar BoundingSphereRadius(void);
 
-    void Elasticity(scalar elasticity);
-    scalar Elasticity(void);
+    void Restitution(scalar elasticity);
+    scalar Restitution(void);
 
-    bool Update(scalar changeInTime); // 월드 행렬 값 지정
-    bool Render(void); //월드행렬 이용하여 점들의 위치 변화
+    void Position(Vector3d positionCenterOfMass);
+    Vector3d Position(void);
+
+    void Velocity(Vector3d newVelocity);
+    Vector3d Velocity(void);
+    
+    void SumForce(Vector3d sumExternalForces);
+    Vector3d SumForce(void);
 };
 
 
 inline PointMass::PointMass(void)
 {
-    mass = 0.0;
+    mass = 1.0;
+    boundingSphereRadius = 1.0;
+    restitution = 0.9;
 }
 
-//inline bool PointMass::LoadMesh(std::string meshFileName)
-//{
-    //assert(meshFileName.length() > 0);
-    //return (objectMesh.Load(meshFileName));
-//}
 
 inline void PointMass::Mass(scalar massValue)
 {
@@ -74,65 +65,54 @@ inline scalar PointMass::Mass(void)
     return mass;
 }
 
-inline void PointMass::Location(Vector3d locationCenterOfMass)
+inline void PointMass::Position(Vector3d positionCenterOfMass)
 {
-    centerOfMass = locationCenterOfMass;
+    aConfiguration[0].position = positionCenterOfMass;
 }
 
-inline Vector3d PointMass::Location(void)
+inline Vector3d PointMass::Position(void)
 {
-    return centerOfMass;
+    return aConfiguration[0].position;
 }
 
-inline void PointMass::LinearVelocity(Vector3d newVelocity)
+inline void PointMass::Velocity(Vector3d newVelocity)
 {
-    linearVelocity = newVelocity;
+    aConfiguration[0].velocity = newVelocity;
 }
 
-inline Vector3d PointMass::LinearVelocity(void)
+inline Vector3d PointMass::Velocity(void)
 {
-    return linearVelocity;
+    return aConfiguration[0].velocity;
 }
 
-inline void PointMass::LinearAcceleration(Vector3d newAcceleration)
+inline void PointMass::SumForce(Vector3d sumExternalForces)
 {
-    linearAcceleration = newAcceleration;
+    aConfiguration[0].sumForce = sumExternalForces;
 }
 
-inline Vector3d PointMass::LinearAcceleration(void)
+inline Vector3d PointMass::SumForce(void)
 {
-    return linearAcceleration;
-}
-
-inline void PointMass::Force(Vector3d sumExternalForces)
-{
-    sumForces = sumExternalForces;
-}
-
-inline Vector3d PointMass::Force(void)
-{
-    return sumForces;
+    return aConfiguration[0].sumForce;
 }
 
 inline void PointMass::BoundingSphereRadius(scalar sphereRadius)
 {
-    radius = sphereRadius;
+    boundingSphereRadius = sphereRadius;
 }
 
 inline scalar PointMass::BoundingSphereRadius(void)
 {
-    return radius;
+    return boundingSphereRadius;
 }
 
-inline void PointMass::Elasticity(scalar elasticity)
+inline void PointMass::Restitution(scalar elasticity)
 {
     restitution = elasticity;
 }
 
-inline scalar PointMass::Elasticity(void)
+inline scalar PointMass::Restitution(void)
 {
     return restitution;
 }
-
 
 }

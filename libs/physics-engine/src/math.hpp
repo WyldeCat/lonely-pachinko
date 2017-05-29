@@ -179,7 +179,7 @@ inline Vector3d Vector3d::operator /=(scalar rightOperand)
 }
 inline scalar Vector3d::dotProduct(const Vector3d &v1)
 {
-    return (x*v1.x, y*v1.y, z*v1.z);
+    return (x*v1.x + y*v1.y + z*v1.z);
 }
 inline scalar Vector3d::norm(void)
 {
@@ -212,137 +212,259 @@ inline Vector3d Vector3d::normalize(scalar tolerance)
 }
 
 
-//Matrix class
 
-class Matrix
+class Matrix3x3
 {
 public:
-    float m[4][4];
 
-    Matrix(float mIn[4][4] = NULL)
-    {
-        if (mIn)
-            set(mIn);
-        else
-            memset(m, 0, sizeof(float) * 16);
-    }
+    Matrix3x3(void);
+    Matrix3x3(scalar(*pElements)[3]);
 
-    void set(float glMatrix[4][4])
-    {
-        memcpy(m, glMatrix, sizeof(float) * 16);
-    }
+    // @todo this isn't the safest ctor to have
+    enum mode { SkewSymmetric, Zero };
+    inline Matrix3x3(mode MustBeZero);
+    inline Matrix3x3(Vector3d CrossVector, mode MustBeSkewSymmetric);
 
-    float* matrix()
-    {
-        return (float*)m;
-    }
+    inline Matrix3x3 &operator+=(Matrix3x3 const &A);
 
-    Matrix add(Matrix m2)
-    {
-        Matrix ret;
+    inline scalar &operator()(int unsigned Row, int unsigned Column);
+    inline scalar const &operator()(int unsigned Row, int unsigned Column) const;
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                ret.m[i][j] = m[i][j] + m2.m[i][j];
-            }
-        }
+    inline scalar GetElement(int Row, int Column) const;
+    inline Matrix3x3 &SetElement(int Row, int Column, scalar Value);
 
+protected:
 
-        return ret;
+    enum do_not_initialize { DoNotInitialize };
 
-    }
+    inline Matrix3x3(do_not_initialize);
 
-    Matrix subtract(Matrix m2)
-    {
-        Matrix ret;
-
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                ret.m[i][j] = m[i][j] - m2.m[i][j];
-            }
-        }
-
-        return ret;
-
-    }
-
-    Matrix multiply(Matrix m2)
-    {
-        Matrix ret;
-
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                ret.m[i][j] = 0.0;
-            }
-        }
-
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                for (int k = 0; k < 4; k++) {
-                    ret.m[i][j] += m[i][k] * m2.m[k][j];
-                }
-            }
-        }
-
-        return ret;
-    }
-
-    Matrix inverse()
-    {
-        Matrix ret;
-
-        if ((m[0][3] != 0) || (m[1][3] != 0) || (m[2][3] != 0) || (m[3][3] != 1))
-        {
-            printf("ERROR: Matrix is not Affine\n");
-            return ret;
-        }
-
-        float i11 = m[1][1] * m[2][2] - m[1][2] * m[2][1];
-        float i21 = m[1][2] * m[2][0] - m[1][0] * m[2][2];
-        float i31 = m[1][0] * m[2][1] - m[1][1] * m[2][0];
-        float det = i11*m[0][0] + i21*m[0][1] + i31*m[0][2];
-
-        if (det == 0)
-        {
-            printf("ERROR: Matrix is singular\n");
-            return ret;
-        }
-        else
-            det = 1 / float(det);
-
-        float i12 = m[0][2] * m[2][1] - m[0][1] * m[2][2];
-        float i22 = m[0][0] * m[2][2] - m[0][2] * m[2][0];
-        float i32 = m[0][1] * m[2][0] - m[0][0] * m[2][1];
-
-        float i13 = m[0][1] * m[1][2] - m[0][2] * m[1][1];
-        float i23 = m[0][2] * m[1][0] - m[0][0] * m[1][2];
-        float i33 = m[0][0] * m[1][1] - m[0][1] * m[1][0];
-
-        float i41 = -(i11*m[3][0] + i21*m[3][1] + i31*m[3][2]);
-        float i42 = -(i12*m[3][0] + i22*m[3][1] + i32*m[3][2]);
-        float i43 = -(i13*m[3][0] + i23*m[3][1] + i33*m[3][2]);
-
-        float inv[4][4] =
-        {
-            { det*i11, det*i12, det*i13, 0 },
-            { det*i21, det*i22, det*i23, 0 },
-            { det*i31, det*i32, det*i33, 0 },
-            { det*i41, det*i42, det*i43, 1 }
-        };
-        ret.set(inv);
-
-        return ret;
-    }
+    scalar aElements[3][3];
 };
 
+Matrix3x3::Matrix3x3(void)
+{
+    for (int Counter = 0; Counter < 9; Counter++)
+    {
+        aElements[0][Counter] = 0;
+    }
+
+    aElements[0][0] = aElements[1][1] = aElements[2][2] = 1;
+}
+
+inline scalar &Matrix3x3::operator()(int unsigned Row, int unsigned Column)
+{
+    assert((Row < 3) && (Column < 3));
+    return aElements[Row][Column];
+}
+
+inline scalar const &Matrix3x3::operator()(int unsigned Row,
+    int unsigned Column) const
+{
+    assert((Row < 3) && (Column < 3));
+    return aElements[Row][Column];
+}
+
+inline scalar Matrix3x3::GetElement(int Row, int Column) const
+{
+    return aElements[Row][Column];
+}
+
+inline Matrix3x3 &Matrix3x3::SetElement(int Row, int Column, scalar Value)
+{
+    aElements[Row][Column] = Value;
+
+    return *this;
+}
+
+inline Matrix3x3::Matrix3x3(do_not_initialize)
+{
+}
+
+inline Matrix3x3::Matrix3x3(scalar(*pElements)[3])
+{
+    assert(pElements);
+
+    Matrix3x3 &M = *this;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            M(i, j) = pElements[i][j];
+        }
+    }
+}
+
+inline Matrix3x3::Matrix3x3(Vector3d Vector, mode Mode)
+{
+    assert(Mode == SkewSymmetric);
+
+    Matrix3x3 &M = *this;
+
+    M(0, 0) = 0;           M(0, 1) = -Vector.Z(); M(0, 2) = Vector.Y();
+    M(1, 0) = Vector.Z();  M(1, 1) = 0;           M(1, 2) = -Vector.X();
+    M(2, 0) = -Vector.Y(); M(2, 1) = Vector.X();  M(2, 2) = 0;
+}
+
+inline Matrix3x3::Matrix3x3(mode Mode)
+{
+    assert(Mode == Zero);
+
+    for (int Counter = 0; Counter < 3; Counter++)
+    {
+        aElements[Counter][0] = 0;
+        aElements[Counter][1] = 0;
+        aElements[Counter][2] = 0;
+    }
+}
+
+inline Matrix3x3 Transpose(Matrix3x3 const &Matrix)
+{
+    Matrix3x3 Return;
+
+    for (int Counter = 0; Counter < 3; Counter++)
+    {
+        Return(0, Counter) = Matrix(Counter, 0);
+        Return(1, Counter) = Matrix(Counter, 1);
+        Return(2, Counter) = Matrix(Counter, 2);
+    }
+
+    return Return;
+}
+
+inline Matrix3x3 operator+(Matrix3x3 const &Operand1, Matrix3x3 const &Operand2)
+{
+    Matrix3x3 Return;
+
+    for (int Counter = 0; Counter < 3; Counter++)
+    {
+        Return(0, Counter) = Operand1(0, Counter) + Operand2(0, Counter);
+        Return(1, Counter) = Operand1(1, Counter) + Operand2(1, Counter);
+        Return(2, Counter) = Operand1(2, Counter) + Operand2(2, Counter);
+    }
+
+    return Return;
+}
+
+inline Matrix3x3 operator-(Matrix3x3 const &Operand1, Matrix3x3 const &Operand2)
+{
+    Matrix3x3 Return;
+
+    for (int Counter = 0; Counter < 3; Counter++)
+    {
+        Return(0, Counter) = Operand1(0, Counter) - Operand2(0, Counter);
+        Return(1, Counter) = Operand1(1, Counter) - Operand2(1, Counter);
+        Return(2, Counter) = Operand1(2, Counter) - Operand2(2, Counter);
+    }
+
+    return Return;
+}
+
+inline Matrix3x3 operator*(scalar const Value, Matrix3x3 const &Matrix)
+{
+    Matrix3x3 Return;
+
+    for (int Counter = 0; Counter < 3; Counter++)
+    {
+        Return(0, Counter) = Value * Matrix(0, Counter);
+        Return(1, Counter) = Value * Matrix(1, Counter);
+        Return(2, Counter) = Value * Matrix(2, Counter);
+    }
+
+    return Return;
+}
+
+inline Matrix3x3 &Matrix3x3::operator+=(Matrix3x3 const &Operand1)
+{
+    for (int Counter = 0; Counter < 3; Counter++)
+    {
+        // @todo this is probably the wrong order, but I'm lazy
+        aElements[0][Counter] += Operand1(0, Counter);
+        aElements[1][Counter] += Operand1(1, Counter);
+        aElements[2][Counter] += Operand1(2, Counter);
+    }
+
+    return *this;
+}
+
+inline Matrix3x3 operator*(Matrix3x3 const &Matrix, scalar const Value)
+{
+    return Value * Matrix;
+}
+
+inline Matrix3x3 operator-(Matrix3x3 const &Matrix)
+{
+    Matrix3x3 Return;
+
+    for (int Counter = 0; Counter < 3; Counter++)
+    {
+        Return(0, Counter) = -Matrix(0, Counter);
+        Return(1, Counter) = -Matrix(1, Counter);
+        Return(2, Counter) = -Matrix(2, Counter);
+    }
+
+    return Return;
+}
+
+Matrix3x3 operator*(Matrix3x3 const &Multiplicand, Matrix3x3 const &Multiplier)
+{
+    Matrix3x3 ReturnMatrix;
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            scalar Value = 0;
+
+            for (int k = 0; k < 3; k++)
+            {
+                Value += Multiplicand.GetElement(i, k) *
+                    Multiplier.GetElement(k, j);
+            }
+
+            ReturnMatrix.SetElement(i, j, Value);
+        }
+    }
+
+    return ReturnMatrix;
+}
+
+void OrthonormalizeOrientation(Matrix3x3 &Orientation)
+{
+    Vector3d x1(Orientation(0, 0), Orientation(1, 0), Orientation(2, 0));
+    Vector3d y1(Orientation(0, 1), Orientation(1, 1), Orientation(2, 1));
+    Vector3d z1;
+
+    x1.normalize(SCALAR_TOLERANCE);
+    z1 = x1.crossProduct.y1.normalize(SCALAR_TOLERANCE);
+    y1 = z1.crossProduct.x1.normalize(SCALAR_TOLERANCE);
+
+    Orientation(0, 0) = x1.X(); Orientation(0, 1) = y1.X(); Orientation(0, 2) = z1.X();
+    Orientation(1, 0) = x1.Y(); Orientation(1, 1) = y1.Y(); Orientation(1, 2) = z1.Y();
+    Orientation(2, 0) = x1.Z(); Orientation(2, 1) = y1.Z(); Orientation(2, 2) = z1.Z();
+}
+
+Vector3d operator*(Matrix3x3 const &Multiplicand, Vector3d Multiplier)
+{
+    Vector3d ReturnPoint;
+
+    for (int i = 0; i < 3; i++)
+    {
+        scalar Value = 0;
+        Value += Multiplicand.GetElement(i, 0) * Multiplier.X();
+        Value += Multiplicand.GetElement(i, 1) * Multiplier.Y();
+        Value += Multiplicand.GetElement(i, 2) * Multiplier.Z();
+        if(i==0) ReturnPoint.X(Value);
+        else if (i == 1) ReturnPoint.Y(Value);
+        else ReturnPoint.Z(Value);
+    }
+
+    return ReturnPoint;
+}
 
 inline bool CloseToZero(scalar testValue)
 {
     bool answer = (testValue > -1 * SCALAR_TOLERANCE && testValue <= SCALAR_TOLERANCE) ? true : false;
     return answer;
 }
-
-
-
-
 }

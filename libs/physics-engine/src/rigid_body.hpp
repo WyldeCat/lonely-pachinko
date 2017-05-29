@@ -5,202 +5,121 @@
 namespace pmframework
 {
 
-class RigidBody
+class RigidBody : protected PointMass
 {
 private:
-    //mesh objectMesh;
+    Matrix3x3 inverseBodyInertiaTensor;
 
-    scalar mass;
-    Vector3d centerOfMass;
-    Vector3d linearVelocity;
-    Vector3d linearAcceleration;
-    force sumForces;
+    struct configuration : public PointMass::configuration{
+        Vector3d angularMomentum;
+        Vector3d torque;
+        Matrix3x3 orientation;
 
-    angleSet3d currentOrientation;
-    Vector3d angularVelocity;
-    Vector3d angularAcceleration;
-    Vector3d rotationalInertia;
-    Vector3d torque;
+        Matrix3x3 inverseWorldInertiaTensor;
+        Vector3d angularVelocity;
+        Vector3d rotationalInertia;
+    }aConfiguration[numberOfConfigurations];
 
-    scalar coefficientOfRestitution;
-    scalar boundingSphereRadius;
-
-    //___ worldMatrix;
+    friend class Simulation;
 
 public:
     RigidBody(void);
 
-    //bool LoadMesh(std::string meshFileName);
+    virtual void InverseBodyInertiaTensor(Matrix3x3 inverseInertiaValue);
+    virtual Matrix3x3 InverseBodyInertiaTensor(void);
 
-    void Mass(scalar massValue);
-    scalar Mass(void);
+    virtual void AngularMomentum(Vector3d angularMomentumValue);
+    virtual Vector3d AngularMomentum(void);
 
-    void Location(Vector3d locationCenterOfMass);
-    Vector3d Location(void);
+    virtual void Torque(Vector3d torqueValue);
+    virtual Vector3d Torque(void);
 
-    void LinearVelocity(Vector3d newVelocity);
-    Vector3d LinearVelocity(void);
+    virtual void Orientation(Vector3d newOrientation);
+    virtual Matrix3x3 Orientation(void);
 
-    void LinearAcceleration(Vector3d newAcceleration);
-    Vector3d LinearAcceleration(void);
+    virtual void InverseWorldInertiaTensor(Matrix3x3 inverseInertiaValue);
+    virtual Matrix3x3 InverseWorldInertiaTensor(void);
 
-    void Force(force SumExternalForces);
-    force Force(void);
+    virtual void AngularVelocity(Vector3d velocity);
+    virtual Vector3d AngularVelocity(void);
 
-    void CurrentOrientation(angleSet3d newOrientation);
-    angleSet3d CurrentOrientation(void);
-
-    void AngularVelocity(Vector3d newAngularVelocity);
-    Vector3d AngularVelocity(void);
-
-    void AngularAcceleration(Vector3d newAngularAcceleration);
-    Vector3d AngularAcceleration(void);
-
-    void RotationalInertia(Vector3d inertiaValue);
-    Vector3d RotationalInertia(void);
-
-    void Torque(Vector3d torqueValue);
-    Vector3d Torque(void);
-
-    void CoefficientOfRestitution(scalar elasticity);
-    scalar CoefficientOfRestitution(void);
-
-    void BoundingSphereRadius(scalar radius);
-    scalar BoundingSphereRadius(void);
-
-    bool Update(scalar changeInTime);
-    bool Render(void);
-
+    virtual void RotationalInertia(Vector3d inertiaValue);
+    virtual Vector3d RotationalInertia(void);
 };
 
 inline RigidBody::RigidBody(void)
 {
-    mass = 0.0;
+
 }
 
-//inline bool RigidBody::LoadMesh(std::string meshFileName)
-//{}
-
-inline void RigidBody::Mass(scalar massValue)
+inline void RigidBody::InverseBodyInertiaTensor(Matrix3x3 inverseInertiaValue)
 {
-    assert(massValue > 0);
-    mass = massValue;
+    inverseBodyInertiaTensor = inverseInertiaValue;
 }
 
-inline scalar RigidBody::Mass(void)
+inline Matrix3x3 RigidBody::InverseBodyInertiaTensor(void)
 {
-    return mass;
+    return inverseBodyInertiaTensor;
 }
 
-inline void RigidBody::Location(Vector3d locationCenterOfMass)
+inline void RigidBody::AngularMomentum(Vector3d angularMomentumValue)
 {
-    centerOfMass = locationCenterOfMass;
+    aConfiguration[0].angularMomentum = angularMomentumValue;
 }
 
-inline Vector3d RigidBody::Location(void)
+inline Vector3d RigidBody::AngularMomentum(void)
 {
-    return centerOfMass;
-}
-
-inline void RigidBody::LinearVelocity(Vector3d newVelocity)
-{
-    linearVelocity = newVelocity;
-}
-
-inline Vector3d RigidBody::LinearVelocity(void)
-{
-    return linearVelocity;
-}
-
-inline void RigidBody::LinearAcceleration(Vector3d newAcceleration)
-{
-    linearAcceleration = newAcceleration;
-}
-
-inline Vector3d RigidBody::LinearAcceleration(void)
-{
-    return linearAcceleration;
-}
-
-inline void RigidBody::Force(force sumExternalForces)
-{
-    sumForces = sumExternalForces;
-}
-
-inline force RigidBody::Force(void)
-{
-    return sumForces;
-}
-
-inline void RigidBody::CurrentOrientation(angleSet3d newOrientation)
-{
-    currentOrientation = newOrientation;
-}
-
-inline angleSet3d RigidBody::CurrentOrientation(void)
-{
-    return currentOrientation;
-}
-
-inline void RigidBody::AngularVelocity(Vector3d newAngularVelocity)
-{
-    angularVelocity = newAngularVelocity;
-}
-
-inline Vector3d RigidBody::AngularVelocity(void)
-{
-    return angularVelocity;
-}
-
-inline void RigidBody::AngularAcceleration(Vector3d newAngularAcceleration)
-{
-    angularAcceleration = newAngularAcceleration;
-}
-
-inline Vector3d RigidBody::AngularAcceleration(void)
-{
-    return angularAcceleration;
-}
-
-inline void RigidBody::RotationalInertia(Vector3d inertiaValue)
-{
-    rotationalInertia = inertiaValue;
-}
-
-inline Vector3d RigidBody::RotationalInertia(void)
-{
-    return rotationalInertia;
+    return  aConfiguration[0].angularMomentum;
 }
 
 inline void RigidBody::Torque(Vector3d torqueValue)
 {
-    torque = torqueValue;
+    aConfiguration[0].torque = torqueValue;
 }
 
 inline Vector3d RigidBody::Torque(void)
 {
-    return torque;
+    return aConfiguration[0].torque;
 }
 
-inline void RigidBody::CoefficientOfRestitution(scalar elasticity)
+inline void RigidBody::Orientation(Vector3d newOrientation)
 {
-    coefficientOfRestitution = elasticity;
+    aConfiguration[0].orientation = newOrientation;
 }
 
-inline scalar RigidBody::CoefficientOfRestitution(void)
+inline Matrix3x3 RigidBody::Orientation(void)
 {
-    return coefficientOfRestitution;
+    return aConfiguration[0].orientation;
 }
 
-inline void RigidBody::BoundingSphereRadius(scalar radius)
+inline void RigidBody::InverseWorldInertiaTensor(Matrix3x3 inverseInertiaValue)
 {
-    boundingSphereRadius = radius;
+    aConfiguration[0].inverseWorldInertiaTensor = inverseInertiaValue;
 }
 
-inline scalar RigidBody::BoundingSphereRadius(void)
+inline Matrix3x3 RigidBody::InverseWorldInertiaTensor(void)
 {
-    return boundingSphereRadius;
+    return aConfiguration[0].inverseWorldInertiaTensor;
 }
 
+inline void RigidBody::AngularVelocity(Vector3d velocity)
+{
+    aConfiguration[0].angularVelocity = velocity;
+}
+
+inline Vector3d RigidBody::AngularVelocity(void)
+{
+    return aConfiguration[0].angularVelocity;
+}
+
+inline void RigidBody::RotationalInertia(Vector3d inertiaValue)
+{
+    aConfiguration[0].rotationalInertia = inertiaValue;
+}
+
+inline Vector3d RigidBody::RotationalInertia(void)
+{
+    return aConfiguration[0].rotationalInertia;
+}
 
 }

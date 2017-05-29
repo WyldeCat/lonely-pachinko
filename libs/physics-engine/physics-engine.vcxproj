@@ -154,18 +154,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\collision.cpp" />
-    <ClCompile Include="src\particle_bounce.cpp" />
     <ClCompile Include="src\phy_engine.cpp" />
     <ClCompile Include="src\point_mass.cpp" />
-    <ClCompile Include="src\rigid_body.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\3d_angle_set.hpp" />
-    <ClInclude Include="src\collision.hpp" />
-    <ClInclude Include="src\force.hpp" />
     <ClInclude Include="src\math.hpp" />
     <ClInclude Include="src\phy_engine.hpp" />
+    <ClInclude Include="src\plane.hpp" />
     <ClInclude Include="src\pmframework.hpp" />
     <ClInclude Include="src\point_mass.hpp" />
     <ClInclude Include="src\rigid_body.hpp" />

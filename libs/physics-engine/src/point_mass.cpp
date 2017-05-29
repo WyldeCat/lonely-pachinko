@@ -6,7 +6,8 @@ namespace pmframework
 bool PointMass::Update(scalar changeInTime)
 {
     assert(mass != 0);
-    linearAcceleration = sumForces / mass;
+    linearAcceleration = (sumForce.Force())/ mass;
+    sumForce.Force(Vector3d(0, 0, 0));
     linearVelocity += linearAcceleration * changeInTime;
     centerOfMass += linearVelocity * changeInTime;
 
