@@ -1,12 +1,8 @@
 #version 440
 
-layout(binding = 0, rgba32f) uniform image2D framebuffer;
-// wrriten by compute shader
-
-layout (local_size_x = 1, local_size_y = 1) in;
-
-// camera specification
-// ray will be interpolated for each pixel
+#define MAX_NUM_VERTICES  2500
+#define MAX_NUM_TRIANGLES 2500
+#define MAX_NUM_SPHERES   2500
 
 struct triangle {
     vec3 points[3];
@@ -22,8 +18,15 @@ struct hitinfo {
     int idx;
 };
 
-uniform triangle triangles[2500];
-uniform sphere spheres[2500];
+layout(binding = 0, rgba32f) uniform image2D framebuffer;
+// wrriten by compute shader
+
+layout (local_size_x = 1, local_size_y = 1) in;
+
+uniform vec3 vertices[MAX_NUM_VERTICES];
+uniform triangle triangles[MAX_NUM_TRIANGLES];
+uniform sphere spheres[MAX_NUM_SPHERES];
+
 uniform int num_triangles;
 uniform int num_spheres;
 
@@ -53,10 +56,18 @@ bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
 vec4 trace(vec3 origin, vec3 dir)
 {
     hitinfo info;
-    if (intersect_objects(origin, dir, info)) {
-        vec4 gray = vec4(info.idx/10.0 + 0.8);
-        return vec4(gray.rgb, 1.0);
+    int i, count = 0;
+    for (i = 0; i < num_triangles; i++) {
+        if (vertices[triangles[i].points[0]][0] 
+                == vertices[triangles[i].points[1]][1] &&
+            triangles[i].points[1] == triangles[i].points[2]) {
+            count++;
+        }
     }
+    for (i = 0; i < num_spheres; i++) {
+
+    }
+
     return vec4(1.0, 0.0, 0.0, 0.0);
 }
 
@@ -65,11 +76,9 @@ void main()
     // get index in global work group i.e x,y position
     ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
     vec2 pos = pixel_coords / 1024.0;
-    
+    vec3 eye_ = eye;
     vec3 dir = mix(mix(ray00, ray01, pos.y), mix(ray10, ray11, pos.y), pos.x);
-    vec4 pixel = vec4(1, (triangles[170].points[0].y)/4, 1,1);
-    //vec4(1, triangles[2200].points[0].y/4,
-      //  abs(triangles[2200].points[0].z), 1.0);
+    vec4 pixel = trace(eye, dir);
     
     imageStore(framebuffer, pixel_coords, pixel);
 }

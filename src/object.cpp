@@ -34,7 +34,6 @@ void Mesh::Draw()
 Mesh::Mesh(const std::string& obj_file)
 {
     std::fstream obj(obj_file);
-
     if (obj.is_open()) {
         for (std::string line; std::getline(obj, line);) {
             if (line[0] == '#' || line.size() == 0) continue;

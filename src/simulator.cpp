@@ -305,22 +305,14 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
     proj_uniform_ = glGetUniformLocationARB(shader_program_, "projection");
 
     eye_uniform_ = glGetUniformLocationARB(compute_program_, "eye");
+
     ray_uniform_[0][0] = glGetUniformLocationARB(compute_program_, "ray00");
     ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
     ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
     ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
 
     for (int i = 0; i < 2500; i++) {
-        for (int j = 0; j < 3; j++) {
-            std::string pos = "triangles[" + std::to_string(i) +
-                "].points[" + std::to_string(j) + "]";
-            triangles_uniform_[i][j] = 
-                glGetUniformLocationARB(compute_program_, pos.data());
-            if (i == 0 && j == 0)
-                std::cout << triangles_uniform_[i][j] << std::endl;
-            if (i == 170 && j == 0)
-                std::cout << triangles_uniform_[i][j] << std::endl;
-        }
+        std::string pos = "triangles[" + std::to_string(i) + "].points";
     }
 
     num_triangles = glGetUniformLocationARB(compute_program_, "num_triangles");
@@ -500,8 +492,8 @@ void Simulator::compute()
                     // the number of vertex has to 3
                     if (count_t == 169 && count_v == 0);
                         //std::cout << (*vertex)->pos_.x << ", " << (*vertex)->pos_.y << "," << (*vertex)->pos_.z << std::endl;
-                    glUniform3f(triangles_uniform_[count_t][count_v++],
-                        (*vertex)->pos_.x, (*vertex)->pos_.y, (*vertex)->pos_.z);
+           //         glUniform3f(triangles_uniform_[count_t][count_v++],
+             //           (*vertex)->pos_.x, (*vertex)->pos_.y, (*vertex)->pos_.z);
                 }
                 count_t++;
             }

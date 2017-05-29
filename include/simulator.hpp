@@ -98,8 +98,9 @@ private:
 
     GLint ray_uniform_[2][2];
     GLint eye_uniform_;
-    GLint triangles_uniform_[2500][3];
-    GLint spheres_uniform_[2500];
+    GLint triangles_uniform_;
+    GLint spheres_uniform_;
+    GLint vertices_uniform_;
     GLint num_triangles;
     GLint num_spheres;
 
