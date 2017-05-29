@@ -98,17 +98,14 @@ private:
 
     GLint ray_uniform_[2][2];
     GLint eye_uniform_;
-    GLint triangles_uniform_;
-    GLint spheres_uniform_;
-    GLint vertices_uniform_;
-    GLint num_triangles;
-    GLint num_spheres;
-
-    // TODO : Need to arrange
+    
+    GLuint vertices_ssbo_;
+    GLuint triangles_ssbo_;
+    GLuint spheres_ssbo_;
 
     GLuint texture_;
     GLuint vertex_buffer_object_;
-    
+
     glm::mat4 world_;
     glm::mat4 proj_;
 
@@ -131,6 +128,7 @@ private:
     bool first_touch;
 
     std::vector<glm::vec3> vertices_; // static vertex
+    std::vector<glm::ivec3> faces_;
 };
 
 #endif

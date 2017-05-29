@@ -288,7 +288,7 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
 
     glLinkProgram(shader_program_);
     glLinkProgram(compute_program_);
-    std::cout << glGetError() << std::endl;
+
     std::for_each(shaders.begin(), shaders.end(),
         [&](std::unique_ptr<Shader>& ptr) {
         if (ptr->shader_type_ == GL_VERTEX_SHADER ||
@@ -299,7 +299,7 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
             glDetachShader(compute_program_, ptr->GetShader());
         }
     });
-    int size;
+
     int infologLength = 1024, charsWritten;
     char *infoLog = new char[infologLength];
     glGetProgramInfoLog(compute_program_, infologLength, &charsWritten, infoLog);
@@ -315,15 +315,6 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
     ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
     ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
     ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
-
-    for (int i = 0; i < 2500; i++) {
-        std::string pos = "triangles[" + std::to_string(i) + "].points";
-    }
-
-    num_triangles = glGetUniformLocationARB(compute_program_, "num_triangles");
-    num_spheres = glGetUniformLocationARB(compute_program_, "num_spheres");
-
-    std::cout << num_triangles << std::endl;
 }
 
 void Simulator::load_objects(const pugi::xml_node& obj_list)
@@ -384,7 +375,21 @@ bool Simulator::initialize(const std::string& xml_url)
     }
 
     std::cout << vertices_[0].x << " " << vertices_[0].y << " " << vertices_[0].z << std::endl;
+
     // for compute shader
+    glGenBuffers(1, &vertices_ssbo_);
+    glGenBuffers(1, &triangles_ssbo_);
+    glGenBuffers(1, &spheres_ssbo_);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertices_ssbo_);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_DYNAMIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangles_ssbo_);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        faces_.size() * sizeof(glm::ivec3), &faces_[0], GL_DYNAMIC_COPY);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+   
+
     glGenTextures(1, &texture_);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_);
@@ -484,37 +489,14 @@ void Simulator::compute()
         glm::vec4(curr_camera_.pos_, 0.0));
     glUniform3f(ray_uniform_[1][1], tmp.x, tmp.y, tmp.z);
 
-    int count_t = 0;
-    int count_s = 0;
-
-    for (auto& object : objects_)
-    {
-        auto mesh = dynamic_cast<Mesh*>(object.get());
-        if (mesh) {
-            // TODO : It only supports vertex with normal
-            for (auto& face : mesh->GetFaces()) {
-                auto vertex = face->GetVertices().begin();
-                int count_v = 0;
-                for (; vertex != face->GetVertices().end(); vertex++) {
-                    // the number of vertex has to 3
-                    if (count_t == 169 && count_v == 0);
-                        //std::cout << (*vertex)->pos_.x << ", " << (*vertex)->pos_.y << "," << (*vertex)->pos_.z << std::endl;
-           //         glUniform3f(triangles_uniform_[count_t][count_v++],
-             //           (*vertex)->pos_.x, (*vertex)->pos_.y, (*vertex)->pos_.z);
-                }
-                count_t++;
-            }
-        }
-        else {
-            // TODO : Not implemented
-            std::cout << "not mesh!!" << std::endl;
-        }
-    }
-
-    glUniform1d(num_triangles, count_t);
-    glUniform1d(num_spheres, count_s);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertices_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, triangles_ssbo_);
 
     glDispatchCompute(width_, height_, 1);
+    
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
+
     // compute ray
     glUseProgram(0);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -522,7 +504,6 @@ void Simulator::compute()
     t[0][3] = pos[0];
     t[1][3] = pos[1];
     t[2][3] = pos[2];
-
 }
 
 void Simulator::render()
