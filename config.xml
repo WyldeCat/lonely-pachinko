@@ -1,4 +1,4 @@
-<simulator scale = "50">
+<simulator scale = "10">
   <object-list>
     <object type="mesh">
       <file>models/teapot.obj</file>

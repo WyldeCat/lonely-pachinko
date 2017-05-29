@@ -92,12 +92,18 @@ private:
     GLuint shader_program_; 
     GLuint compute_program_;
     
-    GLuint wld_uniform_;
-    GLuint view_uniform_;
-    GLuint proj_uniform_;
+    GLint wld_uniform_;
+    GLint view_uniform_;
+    GLint proj_uniform_;
 
-    GLuint ray_uniform_[2][2];
-    GLuint eye_uniform_;
+    GLint ray_uniform_[2][2];
+    GLint eye_uniform_;
+    GLint triangles_uniform_[2500][3];
+    GLint spheres_uniform_[2500];
+    GLint num_triangles;
+    GLint num_spheres;
+
+    // TODO : Need to arrange
 
     GLuint texture_;
     GLuint vertex_buffer_object_;

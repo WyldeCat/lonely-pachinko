@@ -309,6 +309,22 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
     ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
     ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
     ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
+
+    for (int i = 0; i < 2500; i++) {
+        for (int j = 0; j < 3; j++) {
+            std::string pos = "triangles[" + std::to_string(i) +
+                "].points[" + std::to_string(j) + "]";
+            triangles_uniform_[i][j] = 
+                glGetUniformLocationARB(compute_program_, pos.data());
+            if (i == 0 && j == 0)
+                std::cout << triangles_uniform_[i][j] << std::endl;
+            if (i == 170 && j == 0)
+                std::cout << triangles_uniform_[i][j] << std::endl;
+        }
+    }
+
+    num_triangles = glGetUniformLocationARB(compute_program_, "num_triangles");
+    num_spheres = glGetUniformLocationARB(compute_program_, "num_spheres");
 }
 
 void Simulator::load_objects(const pugi::xml_node& obj_list)
@@ -337,7 +353,7 @@ bool Simulator::initialize(const std::string& xml_url)
     std::cout << "Scale : " << scale << std::endl;
 
     world_ = glm::mat4(0.0);
-    world_[0][0] = world_[1][1] = world_[2][2] = 1.0 / 100;
+    world_[0][0] = world_[1][1] = world_[2][2] = 1.0 / scale;
     world_[3][3] = 1;
 
     load_shaders(shader_list);
@@ -356,10 +372,10 @@ bool Simulator::initialize(const std::string& xml_url)
             for (auto& face : mesh->GetFaces()) {
                 auto vertex = face->GetVertices().begin();
                 auto normal = face->GetNormals().begin();
-                for (;vertex != face->GetVertices().end(); vertex++, normal++) {
+                for (;vertex != face->GetVertices().end(); vertex++,normal++) {
                     // the number of vertex has to 3
                     vertices_.push_back((*vertex)->pos_);
-                    vertices_.push_back(*(*normal));
+                    vertices_.push_back(*(*normal)); // deprecated
                 }
             }
         } else {
@@ -368,6 +384,7 @@ bool Simulator::initialize(const std::string& xml_url)
         }
     }
 
+    std::cout << vertices_[0].x << " " << vertices_[0].y << " " << vertices_[0].z << std::endl;
     // for compute shader
     glGenTextures(1, &texture_);
     glActiveTexture(GL_TEXTURE0);
@@ -381,7 +398,7 @@ bool Simulator::initialize(const std::string& xml_url)
 	glGenBuffers(1, &vertex_buffer_object_);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
 	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_DRAW);
-    
+
     return true;
 }
 
@@ -448,7 +465,7 @@ void Simulator::compute()
     glUseProgram(compute_program_);
     
     // invoke compute shader
-    glDispatchCompute(width_, height_, 1);
+    
     glUniform3f(eye_uniform_, curr_camera_.pos_.x,
         curr_camera_.pos_.y, curr_camera_.pos_.z);
 
@@ -468,6 +485,37 @@ void Simulator::compute()
         glm::vec4(curr_camera_.pos_, 0.0));
     glUniform3f(ray_uniform_[1][1], tmp.x, tmp.y, tmp.z);
 
+    int count_t = 0;
+    int count_s = 0;
+
+    for (auto& object : objects_)
+    {
+        auto mesh = dynamic_cast<Mesh*>(object.get());
+        if (mesh) {
+            // TODO : It only supports vertex with normal
+            for (auto& face : mesh->GetFaces()) {
+                auto vertex = face->GetVertices().begin();
+                int count_v = 0;
+                for (; vertex != face->GetVertices().end(); vertex++) {
+                    // the number of vertex has to 3
+                    if (count_t == 169 && count_v == 0);
+                        //std::cout << (*vertex)->pos_.x << ", " << (*vertex)->pos_.y << "," << (*vertex)->pos_.z << std::endl;
+                    glUniform3f(triangles_uniform_[count_t][count_v++],
+                        (*vertex)->pos_.x, (*vertex)->pos_.y, (*vertex)->pos_.z);
+                }
+                count_t++;
+            }
+        }
+        else {
+            // TODO : Not implemented
+            std::cout << "not mesh!!" << std::endl;
+        }
+    }
+
+    glUniform1d(num_triangles, count_t);
+    glUniform1d(num_spheres, count_s);
+
+    glDispatchCompute(width_, height_, 1);
     // compute ray
     glUseProgram(0);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
