@@ -57,24 +57,51 @@ uniform vec3 ray11;
 bool intersect_triangle(vec3 origin, vec3 dir, const triangle t, out vec3 p)
 {
     vec3 e1, e2, h, s, q;
-    float a,f,u,v;
-    e1 = vertices_[t.points[1]] - vertices_[t.points[0]];
-    e2 = vertices_[t.points[2]] - vertices_[t.points[0]];
-    h = cross(dir, e2);
-//    a = inner
+    float a, f, u, v, tmp;
+    bool is_intersect = true;
 
+    e1 = vertices_[t.index[1]].pos - vertices_[t.index[0]].pos;
+    e2 = vertices_[t.index[2]].pos - vertices_[t.index[0]].pos;
+    h = cross(dir, e2);
+    a = dot(e1, h);
+    
+    if (a > -0.00001 && a < 0.00001) return true;
+
+    /*
+    f = 1/a;
+    s = origin - vertices_[t.index[0]].pos;
+    u = f * dot(s, h);
+
+    if (u < 0.0 || u > 1.0) return false;
+    
+    q = cross(s, e1);
+    v = f * dot(dir, q);
+
+    if (v < 0.0 || u + v > 1.0) return false;
+
+    tmp = f * dot(e2, q);
+
+    if (tmp > 0.00001) {
+        p = origin + tmp * dir;
+        return true;
+    }
+
+    return false;
+    */
+    return true;
 }
 
 bool intersect_sphere(vec3 origin, vec3 dir, const sphere s, out vec3 p)
 {
     // TODO : Not implemented
-    return vec2(0.0, 0.0);
+    return true;
 }
 
 bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
 {
     int i;
     vec3 p;
+    bool exist = false;
     float min_dist = 999999999;
 
     for (i = 0; i < num_triangles; i++) {
@@ -84,10 +111,11 @@ bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
                 info.point = p;
                 info.idx = i;
                 info.type = 0;
+                exist = true;
             }
         }
     }
-    return false;
+    return exist;
 }
 
 vec4 trace(vec3 origin, vec3 dir)
