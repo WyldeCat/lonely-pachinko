@@ -1,9 +1,9 @@
 #pragma once
 
 #include<assert.h>
+#include<cmath>
 #include<string>
 #include<vector>
-#include<cmath>
 #include<Windows.h>
 
 #include "math.hpp"
