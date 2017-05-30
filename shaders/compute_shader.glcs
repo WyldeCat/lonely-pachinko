@@ -1,25 +1,34 @@
 #version 440
 
-#define MAX_NUM_VERTICES  2500
-#define MAX_NUM_TRIANGLES 2500
-#define MAX_NUM_SPHERES   2500
+#define MAX_NUM_MATERIALS 8
+#define MAX_NUM_VERTICES  256
+#define MAX_NUM_TRIANGLES 256
+#define MAX_NUM_SPHERES   256
+
+struct material {
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+};
 
 struct vertex {
-    vec3 pos;
-    vec3 normal;
+    float pos[3];
+    float normal[3];
 };
 
 struct triangle {
-    ivec3 index;
+    int index[4];
 };
 
 struct sphere {
-    vec4 pos;
+    float pos[3];
+    float r;
 };
 
 struct hitinfo {
     vec3 point;
     int idx;
+    int material_idx;
     int type;
 };
 
@@ -54,22 +63,34 @@ uniform vec3 ray10;
 uniform vec3 ray01;
 uniform vec3 ray11;
 
+material materials[3];
+
 bool intersect_triangle(vec3 origin, vec3 dir, const triangle t, out vec3 p)
 {
+    // TODO : Need to consider front and back
+
     vec3 e1, e2, h, s, q;
     float a, f, u, v, tmp;
     bool is_intersect = true;
 
-    e1 = vertices_[t.index[1]].pos - vertices_[t.index[0]].pos;
-    e2 = vertices_[t.index[2]].pos - vertices_[t.index[0]].pos;
+    e1 = vec3(vertices_[t.index[1]].pos[0] - vertices_[t.index[0]].pos[0], 
+              vertices_[t.index[1]].pos[1] - vertices_[t.index[0]].pos[1],
+              vertices_[t.index[1]].pos[2] - vertices_[t.index[0]].pos[2]);
+
+    e2 = vec3(vertices_[t.index[2]].pos[0] - vertices_[t.index[0]].pos[0], 
+              vertices_[t.index[2]].pos[1] - vertices_[t.index[0]].pos[1],
+              vertices_[t.index[2]].pos[2] - vertices_[t.index[0]].pos[2]);
+
     h = cross(dir, e2);
     a = dot(e1, h);
-    
-    if (a > -0.00001 && a < 0.00001) return true;
 
-    /*
+    if (a > -0.00001 && a < 0.00001) return false;
+    
     f = 1/a;
-    s = origin - vertices_[t.index[0]].pos;
+    s = vec3(origin[0] - vertices_[t.index[0]].pos[0], 
+             origin[1] - vertices_[t.index[0]].pos[1],
+             origin[2] - vertices_[t.index[0]].pos[2]);
+
     u = f * dot(s, h);
 
     if (u < 0.0 || u > 1.0) return false;
@@ -87,13 +108,12 @@ bool intersect_triangle(vec3 origin, vec3 dir, const triangle t, out vec3 p)
     }
 
     return false;
-    */
-    return true;
 }
 
 bool intersect_sphere(vec3 origin, vec3 dir, const sphere s, out vec3 p)
 {
     // TODO : Not implemented
+
     return true;
 }
 
@@ -106,11 +126,27 @@ bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
 
     for (i = 0; i < num_triangles; i++) {
         if (intersect_triangle(origin, dir, triangles_[i], p)) {
-            if (min_dist > distance(origin, p)) {
+            if (min_dist > distance(origin, p))
+            {
                 min_dist = distance(origin, p);
                 info.point = p;
                 info.idx = i;
                 info.type = 0;
+                info.material_idx = triangles_[i].index[3];
+                exist = true;
+            }
+        }
+    }
+
+    for (i = 0; i < num_spheres; i++) {
+        if (intersect_sphere(origin, dir, spheres_[i], p)) {
+            if (min_dist > distance(origin, p)) 
+            {
+                min_dist = distance(origin, p);
+                info.point = p;
+                info.idx = i;
+                info.type = 1;
+                info.material_idx = 2;
                 exist = true;
             }
         }
@@ -124,7 +160,7 @@ vec4 trace(vec3 origin, vec3 dir)
     int i, count = 0;
     
     if (intersect_objects(origin, dir, info)) {
-        return vec4(1.0, 1.0, 1.0, 0.0);
+        return materials[info.material_idx].ambient;
     }
 
     return vec4(0.0, 0.0, 0.0, 0.0);
@@ -132,12 +168,18 @@ vec4 trace(vec3 origin, vec3 dir)
 
 void main() 
 {
+    materials[0].ambient = vec4(1.0, 0.0, 0.0, 1.0);
+    materials[1].ambient = vec4(0.0, 1.0, 0.0, 1.0);
+    materials[2].ambient = vec4(0.0, 0.0, 1.0, 1.0);
+
     // get index in global work group i.e x,y position
     ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
-    vec2 pos = pixel_coords / 1024.0;
+    vec2 pos = pixel_coords / 512.0;
     vec3 dir = mix(mix(ray00, ray01, pos.y), mix(ray10, ray11, pos.y), pos.x);
-    vec4 pixel = trace(eye, dir);
+    vec4 pixel;
+    pixel = trace(eye, dir);
     imageStore(framebuffer, pixel_coords, pixel);
 }
 
-// Reference : https://github.com/LWJGL/lwjgl3-wiki/wiki/2.6.1.-Ray-tracing-with-OpenGL-Compute-Shaders-%28Part-I%29
+// Reference : 
+// https://github.com/LWJGL/lwjgl3-wiki/wiki/2.6.1.-Ray-tracing-with-OpenGL-Compute-Shaders-%28Part-I%29

@@ -29,7 +29,6 @@ GLuint Shader::GetShader()
     return shader_;
 }
 
-#include <iostream>
 bool Shader::check_shader()
 {
 	// TODO : Not implemented

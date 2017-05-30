@@ -37,6 +37,7 @@ public:
     glm::mat4& GetMatrix();
     void Update(const glm::vec3 &pos, const glm::vec3 &target,
         const glm::vec3 &axis_horz);
+    void Update() { calculate();  }
 
 private:
     void calculate();
@@ -127,12 +128,15 @@ private:
 
     int width_;
     int height_;
+    int scale_;
 
     short key_stat[300]; // GL_PRESS, GL_REPEAT, GL_RELEASE
     bool first_touch;
 
     std::vector<glm::vec3> vertices_; // static vertex
-    std::vector<glm::ivec3> faces_;
+    std::vector<glm::ivec4> faces_;
+    std::vector<glm::vec3> vertices__;
+    std::vector<glm::vec4> spheres_;
 };
 
 #endif

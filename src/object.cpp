@@ -4,6 +4,12 @@
 
 #include "object.hpp"
 
+Sphere::Sphere(const glm::vec3& pos, float radius)
+    : radius_(radius)
+    , pos_(pos)
+{
+}
+
 Vertex::Vertex(glm::vec3 &pos)
     : pos_(pos)
 {
@@ -19,12 +25,8 @@ Mesh::Face::Face(std::vector<Token>& tokens, Mesh& mesh)
     });
 }
 
-void Mesh::Face::Draw()
-{
-    // TODO : Not implemented
-}
-
-Mesh::Mesh(const std::string& obj_file)
+Mesh::Mesh(const std::string& obj_file, int material_idx)
+    : material_idx_(material_idx)
 {
     std::fstream obj(obj_file);
     if (obj.is_open()) {
@@ -62,8 +64,3 @@ Mesh::Mesh(const std::string& obj_file)
         std::cerr << "# ERR: Can't open " << obj_file.data() << std::endl;
     }
 } 
-
-void Mesh::Draw()
-{
-    // TODO : Not implemented
-}

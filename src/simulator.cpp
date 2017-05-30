@@ -9,6 +9,27 @@
 
 Simulator* Simulator::instance;
 
+void print_mat(glm::mat4 &x)
+{
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            std::cout << x[i][j] << ", ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+void print_vec(glm::vec3 &v)
+{
+    std::cout << v.x << " " << v.y << " " << v.z << std::endl;
+}
+
+void print_vec(glm::vec4 &v)
+{
+    std::cout << v.x << " " << v.y << " " << v.z << " " << v.w << std::endl;
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     Simulator::KeyCallback(key, scancode, action, mods);
@@ -26,6 +47,7 @@ Camera::Camera(const glm::vec3 &pos, const glm::vec3 &target,
     , axis_vert_(axis_vert)
     , axis_horz_(axis_horz)
 {
+    view_up_ = glm::normalize(glm::cross(axis_horz_, target_ - pos_));
     calculate();
 }
 
@@ -36,7 +58,6 @@ void Camera::Update(const glm::vec3 &pos, const glm::vec3 &target, const glm::ve
     axis_horz_ = axis_horz;
 
     view_up_ = glm::normalize(glm::cross(axis_horz_, target_ - pos_));
-
     calculate();
 }
 
@@ -92,17 +113,6 @@ void Simulator::key_callback(int key, int scancode, int action, int mods)
 void Simulator::MouseMovCallback(double x, double y)
 {
     instance->mouse_mov_callback(x, y);
-}
-
-void print_mat(glm::mat4 &x)
-{
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            std::cout << x[i][j] << ", ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
 }
 
 void Simulator::mouse_mov_callback(double x, double y)
@@ -195,7 +205,7 @@ void Simulator::mouse_mov_callback(double x, double y)
 Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
     : width_(width)
     , height_(height)
-    , curr_camera_(pos, glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
+    , curr_camera_(pos, glm::vec3(0.5, 0, -0.5), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
 {
     window_ = NULL;
 
@@ -210,6 +220,7 @@ Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
         // TODO : error log
         exit(EXIT_FAILURE);
     }
+
     glfwMakeContextCurrent(window_);
     glfwSwapInterval(1);
 
@@ -323,8 +334,6 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
     ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
     ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
     ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
-
-    std::cout << num_vertices_uniform_ << std::endl;
 }
 
 void Simulator::load_objects(const pugi::xml_node& obj_list)
@@ -332,29 +341,52 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
     for (auto object = obj_list.child("object"); object;
         object = object.next_sibling()) {
         if (!strcmp(object.attribute("type").value(), "mesh")) {
+            int material_idx =
+                std::stoi(object.child("material").first_child().value());
             objects_.push_back(
-                std::unique_ptr<Object>(new Mesh(object.child("file").first_child().value())
-                    ));
+                std::unique_ptr<Object>
+                (new Mesh(object.child("file").first_child().value(),
+                    material_idx))
+            );
+        }
+        else if (!strcmp(object.attribute("type").value(), "sphere")) {
+            std::stringstream pos_ss(object.child("pos").first_child().value());
+            GLfloat radius = std::stof(object.child("radius").first_child().value());
+            glm::vec3 pos;
+            pos_ss >> pos.x >> pos.y >> pos.z;
+            objects_.push_back(
+                std::unique_ptr<Object>(new Sphere(pos, radius))
+            );
         }
     }
 
+    int offset = 0;
     for (auto& object : objects_)
     {
         auto mesh = dynamic_cast<Mesh*>(object.get());
+        auto sphere = dynamic_cast<Sphere*>(object.get());
         if (mesh) {
-            // TODO : It only supports vertex with normal
+            // TODO : expand
+            for (auto& vertex : mesh->GetVertices()) {
+                vertices__.push_back(vertex->pos_);
+                vertices__.push_back(vertex->normal_);
+            }
             for (auto& face : mesh->GetFaces()) {
-                faces_.push_back(glm::ivec3());
+                faces_.push_back(glm::ivec4());
                 for (int i = 0; i < face->GetVertices().size(); i++) {
                     vertices_.push_back(face->GetVertex(i)->pos_);
                     vertices_.push_back(*(face->GetNormal(i)));
-                    faces_.back()[i] = face->GetVertexIdx(i);
+                    faces_.back()[i] = face->GetVertexIdx(i) + offset;
                 }
+                faces_.back()[3] = mesh->GetMaterialIdx();
             }
+            offset += vertices__.size() / 2;
+        }
+        else if (sphere) {
+            spheres_.push_back(glm::vec4(sphere->GetPos(),
+                sphere->GetRadius()));
         }
         else {
-            // TODO : Not implemented
-            std::cout << "not mesh!!" << std::endl;
         }
     }
 }
@@ -369,8 +401,9 @@ bool Simulator::initialize(const std::string& xml_url)
     auto object_list = simulator.child("object-list");
 
     int scale = simulator.attribute("scale").as_int();
+    scale_ = scale;
 
-    std::cout << "Scale : " << scale << std::endl;
+    std::cout << "Scale : " << scale_ << std::endl << std::endl;
 
     world_ = glm::mat4(0.0);
     world_[0][0] = world_[1][1] = world_[2][2] = 1.0 / scale;
@@ -391,10 +424,16 @@ bool Simulator::initialize(const std::string& xml_url)
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertices_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-        vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_COPY);
+        vertices__.size() * sizeof(glm::vec3), &vertices__[0], GL_DYNAMIC_COPY);
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangles_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-        faces_.size() * sizeof(glm::ivec3), &faces_[0], GL_STATIC_COPY);
+        faces_.size() * sizeof(glm::ivec4), &faces_[0], GL_STATIC_COPY);
+    
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, spheres_ssbo_);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        spheres_.size() * sizeof(glm::vec4), &spheres_[0], GL_DYNAMIC_COPY);
+    
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
    
     glGenTextures(1, &texture_);
@@ -405,7 +444,7 @@ bool Simulator::initialize(const std::string& xml_url)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width_, height_, 0, GL_RGBA, GL_FLOAT, nullptr);
     glBindImageTexture(0, texture_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     glBindTexture(GL_TEXTURE_2D, 0);
-     
+    
 	glGenBuffers(1, &vertex_buffer_object_);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
 	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_DRAW);
@@ -469,46 +508,44 @@ void Simulator::compute()
     glm::mat4 &t = curr_camera_.GetMatrix();
     glm::vec3 pos(t[0][3], t[1][3], t[2][3]);
     t[0][3] = t[1][3] = t[2][3] = 0;
-    glm::mat4 inv = glm::inverse(proj_ * 
-        glm::transpose(curr_camera_.GetMatrix()) * world_);
+
+    glm::mat4 prev_inv = proj_ * glm::transpose(curr_camera_.GetMatrix()) * world_;
+    glm::mat4 inv = glm::inverse(prev_inv);
     glm::vec4 tmp;
 
     glUseProgram(compute_program_);
     
     // invoke compute shader
     
-    glUniform3f(eye_uniform_, curr_camera_.pos_.x,
-        curr_camera_.pos_.y, curr_camera_.pos_.z);
+    glUniform3f(eye_uniform_, curr_camera_.pos_.x * scale_,
+        curr_camera_.pos_.y * scale_, curr_camera_.pos_.z * scale_);
 
-    tmp = glm::normalize(inv * glm::vec4(-1, -1, 0, 1) -
-        proj_ * glm::vec4(curr_camera_.pos_, 0.0));
+    tmp = glm::normalize(inv * glm::vec4(-1, -1, 0, 1));
     glUniform3f(ray_uniform_[0][0], tmp.x, tmp.y, tmp.z);
-
-    tmp = glm::normalize(inv * glm::vec4(1, -1, 0, 1) -
-        glm::vec4(curr_camera_.pos_, 0.0));
+    
+    tmp = glm::normalize(inv * glm::vec4(1, -1, 0, 1));
     glUniform3f(ray_uniform_[1][0], tmp.x, tmp.y, tmp.z);
-
-    tmp = glm::normalize(inv * glm::vec4(-1, 1, 0, 1) -
-        glm::vec4(curr_camera_.pos_, 0.0));
+    
+    tmp = glm::normalize(inv * glm::vec4(-1, 1, 0, 1));
     glUniform3f(ray_uniform_[0][1], tmp.x, tmp.y, tmp.z);
-
-    tmp = glm::normalize(inv * glm::vec4(1, 1, 0, 1) -
-        glm::vec4(curr_camera_.pos_, 0.0));
+    
+    tmp = glm::normalize(inv * glm::vec4(1, 1, 0, 1));
     glUniform3f(ray_uniform_[1][1], tmp.x, tmp.y, tmp.z);
     
-    glUniform1i(num_vertices_uniform_, vertices_.size() / 2);
+    glUniform1i(num_vertices_uniform_, vertices__.size() / 2);
     glUniform1i(num_triangles_uniform_, faces_.size());
     glUniform1i(num_spheres_uniform_, 0);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertices_ssbo_);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, triangles_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, spheres_ssbo_);
 
     glDispatchCompute(width_, height_, 1);
-    
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
 
-    // compute ray
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+
     glUseProgram(0);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 

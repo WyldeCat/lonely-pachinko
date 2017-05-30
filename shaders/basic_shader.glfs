@@ -6,9 +6,6 @@ uniform sampler2D tex;
 
 void main() 
 {
-    vec2 position = (gl_FragCoord.xy / vec2(1024,1024));
+    vec2 position = (gl_FragCoord.xy / vec2(512,512));
     color = texture(tex, position);
-//    color = vec4(0.8, 0.5, 0.5, 1.0);
 }
-
-// Reference : 
