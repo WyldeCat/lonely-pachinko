@@ -34,7 +34,7 @@ public:
     virtual void Torque(Vector3d torqueValue);
     virtual Vector3d Torque(void);
 
-    virtual void Orientation(Vector3d newOrientation);
+    virtual void Orientation(Matrix3x3 newOrientation);
     virtual Matrix3x3 Orientation(void);
 
     virtual void InverseWorldInertiaTensor(Matrix3x3 inverseInertiaValue);
@@ -82,7 +82,7 @@ inline Vector3d RigidBody::Torque(void)
     return aConfiguration[0].torque;
 }
 
-inline void RigidBody::Orientation(Vector3d newOrientation)
+inline void RigidBody::Orientation(Matrix3x3 newOrientation)
 {
     aConfiguration[0].orientation = newOrientation;
 }

@@ -62,7 +62,7 @@ namespace pmframework
     {
         int Counter;
 
-        for (Counter = 0; Counter < NumberOfBalls; Counter++)
+        for (Counter = 0; Counter < Balls.size(); Counter++)
         {
             RigidBody* Body = Balls[Counter];
             RigidBody::configuration &Configuration = Body->aConfiguration[ConfigurationIndex];
@@ -90,7 +90,7 @@ namespace pmframework
     {
         int Counter;
 
-        for (Counter = 0; Counter < NumberOfBalls; Counter++)
+        for (Counter = 0; Counter < Balls.size(); Counter++)
         {
             RigidBody::configuration &Source = Balls[Counter]->aConfiguration[SourceConfiguration()];
             RigidBody::configuration &Target = Balls[Counter]->aConfiguration[TargetConfiguration()];
@@ -130,10 +130,10 @@ namespace pmframework
         CollisionState = Clear;
         float const DepthEpsilon = 0.001f;
 
-        for (int i = 0; (i < NumberOfBalls - 1) && (CollisionState != Penetrating); ++i) {
+        for (int i = 0; (i < Balls.size() - 1) && (CollisionState != Penetrating); ++i) {
             RigidBody *Body1 = Balls[i];
             RigidBody::configuration &Configuration1 = Body1->aConfiguration[ConfigurationIndex];
-            for (int j = i + 1; j < NumberOfBalls && (CollisionState != Penetrating); ++j) {
+            for (int j = i + 1; j < Balls.size() && (CollisionState != Penetrating); ++j) {
                 RigidBody *Body2 = Balls[j];
                 RigidBody::configuration &Configuration2 = Body2->aConfiguration[ConfigurationIndex];
 
@@ -152,7 +152,7 @@ namespace pmframework
                 }
             }
 
-            for (int WallIndex = 0; (WallIndex < NumberOfWalls) && (CollisionState != Penetrating); WallIndex++) {
+            for (int WallIndex = 0; (WallIndex < Walls.size()) && (CollisionState != Penetrating); WallIndex++) {
 
                 Plane *wall = Walls[WallIndex];
 
