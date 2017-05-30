@@ -1,10 +1,12 @@
-#include <iostream>
-#include "phy_engine.hpp"
+#include "header.hpp"
 
-using namespace std;
-
-int main()
+int main(int argc, char* argv[])
 {
-	print();
-	return 0;
+    Simulator::Init(1024, 1024, glm::vec3(0,0,1), "lonely_pachinko");
+    
+    if (Simulator::Initialize("config.xml")) {
+        Simulator::Start();
+    }
+
+    return 0;
 }

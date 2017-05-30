@@ -1,12 +1,13 @@
 # Windows and Mac OS
 out/
-libs/physics-engine/out/
-x64/
 
 # Windows
 .vs/
 *.VC.db
 *.VC.opendb
+*.user
+Debug/
+Release/
 
 # Mac OS
 *.DS_Store

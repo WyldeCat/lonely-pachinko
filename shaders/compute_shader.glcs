@@ -1,0 +1,115 @@
+#version 440
+
+#define MAX_NUM_VERTICES  2500
+#define MAX_NUM_TRIANGLES 2500
+#define MAX_NUM_SPHERES   2500
+
+struct vertex {
+    vec3 pos;
+    vec3 normal;
+};
+
+struct triangle {
+    ivec3 index;
+};
+
+struct sphere {
+    vec4 pos;
+};
+
+struct hitinfo {
+    vec3 point;
+    int idx;
+    int type;
+};
+
+layout(binding = 0, rgba32f) uniform image2D framebuffer;
+// wrriten by compute shader
+
+layout (local_size_x = 1, local_size_y = 1) in;
+
+layout(binding = 1, std430) buffer vertices
+{
+    vertex vertices_[MAX_NUM_VERTICES];
+    // TODO : Add size
+};
+
+layout(binding = 2, std430) buffer triangles
+{
+    triangle triangles_[MAX_NUM_VERTICES];
+};
+
+layout(binding = 3, std430) buffer spheres
+{
+    sphere spheres_[MAX_NUM_VERTICES];
+};
+
+uniform int num_vertices;
+uniform int num_triangles;
+uniform int num_spheres;
+
+uniform vec3 eye;
+uniform vec3 ray00;
+uniform vec3 ray10;
+uniform vec3 ray01;
+uniform vec3 ray11;
+
+bool intersect_triangle(vec3 origin, vec3 dir, const triangle t, out vec3 p)
+{
+    vec3 e1, e2, h, s, q;
+    float a,f,u,v;
+    e1 = vertices_[t.points[1]] - vertices_[t.points[0]];
+    e2 = vertices_[t.points[2]] - vertices_[t.points[0]];
+    h = cross(dir, e2);
+//    a = inner
+
+}
+
+bool intersect_sphere(vec3 origin, vec3 dir, const sphere s, out vec3 p)
+{
+    // TODO : Not implemented
+    return vec2(0.0, 0.0);
+}
+
+bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
+{
+    int i;
+    vec3 p;
+    float min_dist = 999999999;
+
+    for (i = 0; i < num_triangles; i++) {
+        if (intersect_triangle(origin, dir, triangles_[i], p)) {
+            if (min_dist > distance(origin, p)) {
+                min_dist = distance(origin, p);
+                info.point = p;
+                info.idx = i;
+                info.type = 0;
+            }
+        }
+    }
+    return false;
+}
+
+vec4 trace(vec3 origin, vec3 dir)
+{
+    hitinfo info;
+    int i, count = 0;
+    
+    if (intersect_objects(origin, dir, info)) {
+        return vec4(1.0, 1.0, 1.0, 0.0);
+    }
+
+    return vec4(0.0, 0.0, 0.0, 0.0);
+}
+
+void main() 
+{
+    // get index in global work group i.e x,y position
+    ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+    vec2 pos = pixel_coords / 1024.0;
+    vec3 dir = mix(mix(ray00, ray01, pos.y), mix(ray10, ray11, pos.y), pos.x);
+    vec4 pixel = trace(eye, dir);
+    imageStore(framebuffer, pixel_coords, pixel);
+}
+
+// Reference : https://github.com/LWJGL/lwjgl3-wiki/wiki/2.6.1.-Ray-tracing-with-OpenGL-Compute-Shaders-%28Part-I%29

@@ -1,0 +1,35 @@
+<simulator scale = "10">
+  <object-list>
+    <object type="mesh">
+      <file>models/teapot.obj</file>
+    </object>
+    <!--
+    <object type="mesh">
+      <file>models/bunny.obj</file>
+    </object>
+    -->
+  </object-list>
+  
+  <light-list>
+    <light type="point">
+      <pos>3.0 3.0 3.0</pos>
+      <ambient>0.0 0.0 0.0 1.0</ambient>
+      <diffuse>1.0 0.1 0.1 1.0</diffuse>
+      <specular>1.0 0.1 0.1 1.0</specular>
+    </light>
+    <light type="spot">
+      <pos>7.0 7.0 7.0</pos>
+      <dir>-1.0 0.0 0.0</dir>
+      <ambient>0.0 0.0 0.0 1.0</ambient>
+      <diffuse>0.1 0.1 1.0 1.0</diffuse>
+      <specular>0.1 0.1 1.0 1.0</specular>
+    </light>
+  </light-list>
+  
+  <shader-list>
+    <shader type="vert">shaders/basic_shader.glvs</shader>
+    <shader type="frag">shaders/basic_shader.glfs</shader>
+    <shader type="compute">shaders/compute_shader.glcs</shader>
+  </shader-list>
+  
+</simulator>
