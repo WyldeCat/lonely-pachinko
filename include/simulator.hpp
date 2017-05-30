@@ -98,7 +98,11 @@ private:
 
     GLint ray_uniform_[2][2];
     GLint eye_uniform_;
-    
+
+    GLint num_vertices_uniform_;
+    GLint num_triangles_uniform_;
+    GLint num_spheres_uniform_;
+
     GLuint vertices_ssbo_;
     GLuint triangles_ssbo_;
     GLuint spheres_ssbo_;

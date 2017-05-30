@@ -59,28 +59,44 @@ public:
     int v_, t_, n_;
 };
 
-class Face : public Object {
-public:
-    Face(std::vector<Token>& tokens, 
-        const std::vector<std::shared_ptr<Vertex>>& vertices,
-        const std::vector<std::shared_ptr<glm::vec3>>& normals,
-        const std::vector<std::shared_ptr<glm::vec2>>& textures);
 
-    virtual void Draw();
-
-    const std::vector<std::shared_ptr<Vertex>>& GetVertices() { return vertices_; }
-    const std::vector<std::shared_ptr<glm::vec3>>& GetNormals() { return normals_; }
-    const std::vector<std::shared_ptr<glm::vec2>>& GetTextures() { return textures_; }
-
-private:
-    std::vector<std::shared_ptr<Vertex>> vertices_;
-    std::vector<std::shared_ptr<glm::vec3>> normals_;
-    std::vector<std::shared_ptr<glm::vec2>> textures_;
-};
 
 
 class Mesh : public Object {
 public:
+    class Face : public Object {
+    public:
+        Face(std::vector<Token>& tokens, Mesh& mesh);
+
+        virtual void Draw();
+
+        const std::vector<int>& GetVertices() { return vertices_; }
+        const std::vector<int>& GetNormals() { return normals_; }
+        const std::vector<int>& GetTextures() { return textures_; }
+
+        int GetVertexIdx(int idx) { return vertices_[idx]; }
+        
+        std::shared_ptr<Vertex> GetVertex(int idx)
+        {
+            return mesh_.vertices_[vertices_[idx]];
+        }
+        std::shared_ptr<glm::vec3> GetNormal(int idx)
+        {
+            return mesh_.normals_[normals_[idx]];
+        }
+        std::shared_ptr<glm::vec2> GetTexture(int idx)
+        {
+            return mesh_.textures_[textures_[idx]];
+        }
+
+    private:
+        Mesh& mesh_;
+
+        std::vector<int> vertices_;
+        std::vector<int> normals_;
+        std::vector<int> textures_;
+    };
+
     virtual void Draw();
     Mesh(const std::string& obj_file);
 

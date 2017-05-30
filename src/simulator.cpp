@@ -281,7 +281,8 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
         if (ptr->shader_type_ == GL_VERTEX_SHADER ||
             ptr->shader_type_ == GL_FRAGMENT_SHADER) {
             glAttachShader(shader_program_, ptr->GetShader());
-        } else {
+        }
+        else {
             glAttachShader(compute_program_, ptr->GetShader());
         }
     });
@@ -309,12 +310,21 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
     view_uniform_ = glGetUniformLocationARB(shader_program_, "wld2cam");
     proj_uniform_ = glGetUniformLocationARB(shader_program_, "projection");
 
+    num_vertices_uniform_ = glGetUniformLocationARB(compute_program_,
+        "num_vertices");
+    num_triangles_uniform_ = glGetUniformLocationARB(compute_program_,
+        "num_triangles");
+    num_spheres_uniform_ = glGetUniformLocationARB(compute_program_,
+        "num_spheres");
+
     eye_uniform_ = glGetUniformLocationARB(compute_program_, "eye");
 
     ray_uniform_[0][0] = glGetUniformLocationARB(compute_program_, "ray00");
     ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
     ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
     ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
+
+    std::cout << num_vertices_uniform_ << std::endl;
 }
 
 void Simulator::load_objects(const pugi::xml_node& obj_list)
@@ -324,7 +334,27 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
         if (!strcmp(object.attribute("type").value(), "mesh")) {
             objects_.push_back(
                 std::unique_ptr<Object>(new Mesh(object.child("file").first_child().value())
-            ));
+                    ));
+        }
+    }
+
+    for (auto& object : objects_)
+    {
+        auto mesh = dynamic_cast<Mesh*>(object.get());
+        if (mesh) {
+            // TODO : It only supports vertex with normal
+            for (auto& face : mesh->GetFaces()) {
+                faces_.push_back(glm::ivec3());
+                for (int i = 0; i < face->GetVertices().size(); i++) {
+                    vertices_.push_back(face->GetVertex(i)->pos_);
+                    vertices_.push_back(*(face->GetNormal(i)));
+                    faces_.back()[i] = face->GetVertexIdx(i);
+                }
+            }
+        }
+        else {
+            // TODO : Not implemented
+            std::cout << "not mesh!!" << std::endl;
         }
     }
 }
@@ -348,33 +378,11 @@ bool Simulator::initialize(const std::string& xml_url)
 
     load_shaders(shader_list);
     load_objects(object_list);
-    
+
     if (!check_program()) {
         // TODO : error log
         return false;
     }
-    
-    for (auto& object : objects_)
-    {
-        auto mesh = dynamic_cast<Mesh*>(object.get());
-        if (mesh) {
-            // TODO : It only supports vertex with normal
-            for (auto& face : mesh->GetFaces()) {
-                auto vertex = face->GetVertices().begin();
-                auto normal = face->GetNormals().begin();
-                for (;vertex != face->GetVertices().end(); vertex++,normal++) {
-                    // the number of vertex has to 3
-                    vertices_.push_back((*vertex)->pos_);
-                    vertices_.push_back(*(*normal)); // deprecated
-                }
-            }
-        } else {
-            // TODO : Not implemented
-            std::cout << "not mesh!!" << std::endl;
-        }
-    }
-
-    std::cout << vertices_[0].x << " " << vertices_[0].y << " " << vertices_[0].z << std::endl;
 
     // for compute shader
     glGenBuffers(1, &vertices_ssbo_);
@@ -383,13 +391,12 @@ bool Simulator::initialize(const std::string& xml_url)
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertices_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-        vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_DYNAMIC_COPY);
+        vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangles_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-        faces_.size() * sizeof(glm::ivec3), &faces_[0], GL_DYNAMIC_COPY);
+        faces_.size() * sizeof(glm::ivec3), &faces_[0], GL_STATIC_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
    
-
     glGenTextures(1, &texture_);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_);
@@ -488,6 +495,10 @@ void Simulator::compute()
     tmp = glm::normalize(inv * glm::vec4(1, 1, 0, 1) -
         glm::vec4(curr_camera_.pos_, 0.0));
     glUniform3f(ray_uniform_[1][1], tmp.x, tmp.y, tmp.z);
+    
+    glUniform1i(num_vertices_uniform_, vertices_.size() / 2);
+    glUniform1i(num_triangles_uniform_, faces_.size());
+    glUniform1i(num_spheres_uniform_, 0);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertices_ssbo_);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, triangles_ssbo_);
