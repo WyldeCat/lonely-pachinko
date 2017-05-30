@@ -1,8 +1,8 @@
 #pragma once
 
+#include<string>
 #include<assert.h>
 #include<cmath>
-#include<string>
 #include<vector>
 #include<Windows.h>
 
