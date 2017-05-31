@@ -3,19 +3,23 @@
     
     <object type="mesh">
       <file>models/cube.obj</file>
-      <material>0</material>
-    </object>
-    <object type="mesh">
-      <file>models/wall.obj</file>
       <material>1</material>
     </object>
 
-    
-    <object type="sphere">
-      <pos>3.0 0.0 0.0</pos>
-      <radius>2.0</radius>
+    <object type="mesh">
+      <file>models/wall.obj</file>
+      <material>0</material>
+    </object>
+    <object type="mesh">
+      <file>models/world.obj</file>
+      <material>3</material>
     </object>
     
+    <object type="sphere">
+      <pos>8.0 0.0 0.0</pos>
+      <radius>2.0</radius>
+    </object>
+
   </object-list>
   
   <light-list>

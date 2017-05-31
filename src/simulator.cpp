@@ -380,7 +380,7 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
                 }
                 faces_.back()[3] = mesh->GetMaterialIdx();
             }
-            offset += vertices__.size() / 2;
+            offset = vertices__.size() / 2;
         }
         else if (sphere) {
             spheres_.push_back(glm::vec4(sphere->GetPos(),
@@ -389,6 +389,11 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
         else {
         }
     }
+    for (auto &face : faces_) {
+        std::cout << face.x << " " << face.y << " " << face.z << std::endl;
+    }
+    std::cout << "\ntotal face " << faces_.size() << std::endl;
+    std::cout << "\ntotal vertex " << vertices__.size()/2 << std::endl;
 }
 
 bool Simulator::initialize(const std::string& xml_url)
@@ -433,7 +438,7 @@ bool Simulator::initialize(const std::string& xml_url)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, spheres_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
         spheres_.size() * sizeof(glm::vec4), &spheres_[0], GL_DYNAMIC_COPY);
-    
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
    
     glGenTextures(1, &texture_);
@@ -534,8 +539,8 @@ void Simulator::compute()
     
     glUniform1i(num_vertices_uniform_, vertices__.size() / 2);
     glUniform1i(num_triangles_uniform_, faces_.size());
-    glUniform1i(num_spheres_uniform_, 0);
-
+    glUniform1i(num_spheres_uniform_, spheres_.size());
+    
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertices_ssbo_);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, triangles_ssbo_);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, spheres_ssbo_);
