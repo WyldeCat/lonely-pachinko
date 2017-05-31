@@ -1,11 +1,11 @@
 #pragma once
 
-#include "pmframework.hpp"
+//#include "pmframework.hpp"
 
 namespace pmframework
 {
 
-class RigidBody : protected PointMass
+class RigidBody : public PointMass
 {
 private:
     Matrix3x3 inverseBodyInertiaTensor;

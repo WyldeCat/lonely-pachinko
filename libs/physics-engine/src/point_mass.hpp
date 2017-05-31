@@ -1,5 +1,5 @@
 #pragma once
-#include "pmframework.hpp"
+//#include "pmframework.hpp"
 
 namespace pmframework
 {
@@ -20,7 +20,6 @@ protected:
         Vector3d sumForce;
     }aConfiguration[numberOfConfigurations];
 
-    friend class Simulation;
     friend class RigidBody;
 
 public:

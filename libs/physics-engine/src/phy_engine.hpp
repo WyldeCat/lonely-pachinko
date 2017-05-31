@@ -1,5 +1,5 @@
 #pragma once
-#include "pmframework.hpp"
+//#include "pmframework.hpp"
 
 namespace pmframework
 {
@@ -7,7 +7,7 @@ namespace pmframework
 class Simulation
 {
 public:
-
+    Simulation(scalar x, scalar y, scalar z);
     void Simulate(scalar DeltaTime);
     ~Simulation(void);
 
@@ -17,6 +17,7 @@ public:
     void TargetConfiguration(int index);
     Vector3d CollisionPoint(void);
     void CollisionPoint(Vector3d point);
+    void AddBody(RigidBody * body);
     
 private:
     enum collision_state
@@ -80,6 +81,11 @@ inline Vector3d Simulation::CollisionPoint(void)
 inline void Simulation::CollisionPoint(Vector3d point)
 {
     collisionPoint = point;
+}
+
+inline void Simulation::AddBody(RigidBody * body)
+{
+    Balls.push_back(body);
 }
 
 }

@@ -1,4 +1,6 @@
 #include <iostream>
+#include <gl/gl.h>
+#include <gl/GLU.h>
 #include "pmframework.hpp"
 using namespace pmframework;
 
@@ -6,6 +8,34 @@ namespace pmframework
 {
 
     Vector3d gravity(0, -9.8f, 0);
+
+    //void init(void)
+    //{
+    //    glclearcolor(0, 0, 0, 0);
+    //    glenable(gl_cull_face);
+    //    glenable(gl_depth_test);
+    //    glshademodel(gl_flat);
+
+    //    float alightposition[4] = { 0,0,1,0 };
+    //    gllightfv(gl_light0, gl_position, alightposition);
+    //    glenable(gl_light0);
+    //    glenable(gl_color_material);
+    //    glcolormaterial(gl_front, gl_ambient_and_diffuse);
+
+    //    glmatrixmode(gl_projection);
+    //    glviewport(0, 0, 400, 400);
+    //    gluperspective(45.0, 1, 0.1, 100.0);
+
+    //    glmatrixmode(gl_modelview);
+
+    //    pworld = new simulation(10, 10, 10);
+    //    assert(pworld);
+    //}
+
+    Simulation::Simulation(scalar x, scalar y, scalar z)
+    {
+
+    }
 
     Simulation::~Simulation(void)
     {
