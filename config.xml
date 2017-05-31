@@ -5,7 +5,7 @@
       <file>models/cube.obj</file>
       <material>1</material>
     </object>
-
+    
     <object type="mesh">
       <file>models/wall.obj</file>
       <material>0</material>

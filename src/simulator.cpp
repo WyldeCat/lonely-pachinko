@@ -30,6 +30,11 @@ void print_vec(glm::vec4 &v)
     std::cout << v.x << " " << v.y << " " << v.z << " " << v.w << std::endl;
 }
 
+void print_vec(glm::ivec4 &v)
+{
+    std::cout << v.x << " " << v.y << " " << v.z << " " << v.w << std::endl;
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     Simulator::KeyCallback(key, scancode, action, mods);
@@ -285,55 +290,56 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
     }
 
     shader_program_ = glCreateProgram();
-    compute_program_ = glCreateProgram();
+compute_program_ = glCreateProgram();
 
-    std::for_each(shaders.begin(), shaders.end(),
-        [&](std::unique_ptr<Shader>& ptr) {
-        if (ptr->shader_type_ == GL_VERTEX_SHADER ||
-            ptr->shader_type_ == GL_FRAGMENT_SHADER) {
-            glAttachShader(shader_program_, ptr->GetShader());
-        }
-        else {
-            glAttachShader(compute_program_, ptr->GetShader());
-        }
-    });
+std::for_each(shaders.begin(), shaders.end(),
+    [&](std::unique_ptr<Shader>& ptr) {
+    if (ptr->shader_type_ == GL_VERTEX_SHADER ||
+        ptr->shader_type_ == GL_FRAGMENT_SHADER) {
+        glAttachShader(shader_program_, ptr->GetShader());
+    }
+    else {
+        glAttachShader(compute_program_, ptr->GetShader());
+    }
+});
 
-    glLinkProgram(shader_program_);
-    glLinkProgram(compute_program_);
+glLinkProgram(shader_program_);
+glLinkProgram(compute_program_);
 
-    std::for_each(shaders.begin(), shaders.end(),
-        [&](std::unique_ptr<Shader>& ptr) {
-        if (ptr->shader_type_ == GL_VERTEX_SHADER ||
-            ptr->shader_type_ == GL_FRAGMENT_SHADER) {
-            glDetachShader(shader_program_, ptr->GetShader());
-        }
-        else {
-            glDetachShader(compute_program_, ptr->GetShader());
-        }
-    });
+std::for_each(shaders.begin(), shaders.end(),
+    [&](std::unique_ptr<Shader>& ptr) {
+    if (ptr->shader_type_ == GL_VERTEX_SHADER ||
+        ptr->shader_type_ == GL_FRAGMENT_SHADER) {
+        glDetachShader(shader_program_, ptr->GetShader());
+    }
+    else {
+        glDetachShader(compute_program_, ptr->GetShader());
+    }
+});
 
-    int infologLength = 1024, charsWritten;
-    char *infoLog = new char[infologLength];
-    glGetProgramInfoLog(compute_program_, infologLength, &charsWritten, infoLog);
-    std::cout << infoLog << std::endl;
+int infologLength = 1024, charsWritten;
+char *infoLog = new char[infologLength];
+glGetProgramInfoLog(compute_program_, infologLength, &charsWritten, infoLog);
+std::cout << infoLog << std::endl;
 
-    wld_uniform_ = glGetUniformLocationARB(shader_program_, "obj2wld");
-    view_uniform_ = glGetUniformLocationARB(shader_program_, "wld2cam");
-    proj_uniform_ = glGetUniformLocationARB(shader_program_, "projection");
+wld_uniform_ = glGetUniformLocationARB(shader_program_, "obj2wld");
+view_uniform_ = glGetUniformLocationARB(shader_program_, "wld2cam");
+proj_uniform_ = glGetUniformLocationARB(shader_program_, "projection");
 
-    num_vertices_uniform_ = glGetUniformLocationARB(compute_program_,
-        "num_vertices");
-    num_triangles_uniform_ = glGetUniformLocationARB(compute_program_,
-        "num_triangles");
-    num_spheres_uniform_ = glGetUniformLocationARB(compute_program_,
-        "num_spheres");
+num_vertices_uniform_ = glGetUniformLocationARB(compute_program_,
+    "num_vertices");
+num_triangles_uniform_ = glGetUniformLocationARB(compute_program_,
+    "num_triangles");
+num_spheres_uniform_ = glGetUniformLocationARB(compute_program_,
+    "num_spheres");
+num_nvectors_uniform_ = glGetUniformLocationARB(compute_program_,
+    "num_nvectors");
 
-    eye_uniform_ = glGetUniformLocationARB(compute_program_, "eye");
-
-    ray_uniform_[0][0] = glGetUniformLocationARB(compute_program_, "ray00");
-    ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
-    ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
-    ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
+eye_uniform_ = glGetUniformLocationARB(compute_program_, "eye");
+ray_uniform_[0][0] = glGetUniformLocationARB(compute_program_, "ray00");
+ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
+ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
+ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
 }
 
 void Simulator::load_objects(const pugi::xml_node& obj_list)
@@ -361,6 +367,7 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
     }
 
     int offset = 0;
+    int offset_n = 0;
     for (auto& object : objects_)
     {
         auto mesh = dynamic_cast<Mesh*>(object.get());
@@ -369,8 +376,12 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
             // TODO : expand
             for (auto& vertex : mesh->GetVertices()) {
                 vertices__.push_back(vertex->pos_);
-                vertices__.push_back(vertex->normal_);
             }
+
+            for (auto& nvector : mesh->GetNvectors()) {
+                nvectors_.push_back(*nvector);
+            }
+
             for (auto& face : mesh->GetFaces()) {
                 faces_.push_back(glm::ivec4());
                 for (int i = 0; i < face->GetVertices().size(); i++) {
@@ -379,8 +390,13 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
                     faces_.back()[i] = face->GetVertexIdx(i) + offset;
                 }
                 faces_.back()[3] = mesh->GetMaterialIdx();
+                faces_.push_back(glm::ivec4());
+                for (int i = 0; i < face->GetNormals().size(); i++) {
+                    faces_.back()[i] = face->GetNormalIdx(i) + offset_n;
+                }
             }
-            offset = vertices__.size() / 2;
+            offset = vertices__.size();
+            offset_n = nvectors_.size();
         }
         else if (sphere) {
             spheres_.push_back(glm::vec4(sphere->GetPos(),
@@ -389,11 +405,6 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
         else {
         }
     }
-    for (auto &face : faces_) {
-        std::cout << face.x << " " << face.y << " " << face.z << std::endl;
-    }
-    std::cout << "\ntotal face " << faces_.size() << std::endl;
-    std::cout << "\ntotal vertex " << vertices__.size()/2 << std::endl;
 }
 
 bool Simulator::initialize(const std::string& xml_url)
@@ -416,7 +427,6 @@ bool Simulator::initialize(const std::string& xml_url)
 
     load_shaders(shader_list);
     load_objects(object_list);
-
     if (!check_program()) {
         // TODO : error log
         return false;
@@ -424,12 +434,17 @@ bool Simulator::initialize(const std::string& xml_url)
 
     // for compute shader
     glGenBuffers(1, &vertices_ssbo_);
+    glGenBuffers(1, &nvectors_ssbo_);
     glGenBuffers(1, &triangles_ssbo_);
     glGenBuffers(1, &spheres_ssbo_);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertices_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-        vertices__.size() * sizeof(glm::vec3), &vertices__[0], GL_DYNAMIC_COPY);
+        vertices__.size() * sizeof(glm::vec3), &vertices__[0], GL_STATIC_COPY);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, nvectors_ssbo_);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        nvectors_.size() * sizeof(glm::vec3), &nvectors_[0], GL_STATIC_COPY);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangles_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
@@ -445,7 +460,7 @@ bool Simulator::initialize(const std::string& xml_url)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width_, height_, 0, GL_RGBA, GL_FLOAT, nullptr);
     glBindImageTexture(0, texture_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -537,16 +552,19 @@ void Simulator::compute()
     tmp = glm::normalize(inv * glm::vec4(1, 1, 0, 1));
     glUniform3f(ray_uniform_[1][1], tmp.x, tmp.y, tmp.z);
     
-    glUniform1i(num_vertices_uniform_, vertices__.size() / 2);
-    glUniform1i(num_triangles_uniform_, faces_.size());
+    glUniform1i(num_vertices_uniform_, vertices__.size());
+    glUniform1i(num_nvectors_uniform_, nvectors_.size());
+    glUniform1i(num_triangles_uniform_, faces_.size()/2);
     glUniform1i(num_spheres_uniform_, spheres_.size());
     
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertices_ssbo_);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, triangles_ssbo_);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, spheres_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, nvectors_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, triangles_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, spheres_ssbo_);
 
     glDispatchCompute(width_, height_, 1);
 
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, 0);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);

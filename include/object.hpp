@@ -72,6 +72,7 @@ public:
         const std::vector<int>& GetTextures() { return textures_; }
 
         int GetVertexIdx(int idx) { return vertices_[idx]; }
+        int GetNormalIdx(int idx) { return normals_[idx]; }
         
         std::shared_ptr<Vertex> GetVertex(int idx)
         {
@@ -98,9 +99,15 @@ public:
 
     const std::vector<std::unique_ptr<Face>>& GetFaces() { return faces_; }
     const std::vector<std::shared_ptr<Vertex>>& GetVertices()
-    { 
+    {
         return vertices_; 
     }
+    
+    const std::vector<std::shared_ptr<glm::vec3>>& GetNvectors()
+    {
+        return normals_;
+    }
+
     const int GetMaterialIdx() { return material_idx_; }
 
 private:
