@@ -1,6 +1,6 @@
 <simulator scale = "10">
   <object-list>
-    
+
     <object type="mesh">
       <file>models/cube.obj</file>
       <material>1</material>
@@ -10,6 +10,7 @@
       <file>models/wall.obj</file>
       <material>0</material>
     </object>
+
     <object type="mesh">
       <file>models/world.obj</file>
       <material>3</material>

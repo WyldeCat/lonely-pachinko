@@ -143,23 +143,19 @@ bool intersect_sphere(vec3 origin, vec3 dir,
         vec3(origin.x - s.pos[0], origin.y - s.pos[1], origin.z - s.pos[2]);
 
     float b = 2 * dot(dir, op);
-    float c = pow(length(op), 2) - pow(s.r, 2);
+    float c = dot(op,op) - pow(s.r, 2);
+
     float discr = b * b - 4 * c;
     float x0, x1;
 
-
     if (discr < 0) return false;
 
-    if (discr == 0) x0 = x1 = -0.5 * b;
-    else if (b > 0) {
-        float q = -0.5 * (b + sqrt(discr));
-        x0 = q;
-        x1 = c / q;
+    if (discr == 0) {
+        x0 = x1 = -0.5 * b;
     }
     else {
-        float q = -0.5 * (b - sqrt(discr));
-        x0 = q;
-        x1 = c / q;
+        x0 = -0.5 * (b + sqrt(discr));
+        x1 = -0.5 * (b - sqrt(discr));
     }
 
     if (x0 > x1) {
@@ -168,19 +164,20 @@ bool intersect_sphere(vec3 origin, vec3 dir,
         x1 = tmp;
     }
 
-    if (x0 >= 0) {
-        p = origin + x0 * dir;
-        normal =
-            normalize(vec3(p.x - s.pos[0], p.y - s.pos[1], p.z - s.pos[2]));
-        return true;
-    } 
-    else if (x1 >= 0) {
-        p = origin + x1 * dir;
-        normal = 
-            normalize(vec3(p.x - s.pos[0], p.y - s.pos[1], p.z - s.pos[2]));
-        return true;
+    if (x0 < 0) {
+        if (x1 >= 0) {
+            p = origin + x1 * dir;
+        } else {
+            return false;
+        }
     }
-    return false;
+    else {
+        p = origin + x0 * dir;
+    }
+
+    normal =
+        normalize(vec3(p.x - s.pos[0], p.y - s.pos[1], p.z - s.pos[2]));
+    return true;
 }
 
 bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
@@ -189,18 +186,18 @@ bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
     vec3 p;
     vec3 normal;
     bool exist = false;
-    float min_dist = 999999999;
+    float min_dist = 99999;
 
     for (i = 0; i < num_triangles; i++) {
         if (intersect_triangle(origin, dir, triangles_[i], p, normal)) {
             float dist = distance(origin, p);
-            if (dist > 0.001 && min_dist > dist)
+            if (min_dist > dist)
             {
                 min_dist = dist;
                 info.point = p;
                 info.normal = normal;
                 info.type = 0;
-                info.dist = min_dist;
+                info.dist = dist;
                 info.material_idx = triangles_[i].index[3];
                 exist = true;
             }
@@ -210,13 +207,13 @@ bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
     for (i = 0; i < num_spheres; i++) {
         if (intersect_sphere(origin, dir, spheres_[i], p, normal)) {
             float dist = distance(origin, p);
-            if (min_dist > dist) 
+            if (dist > 0.1 && min_dist > dist) 
             {
                 min_dist = dist;
                 info.point = p;
                 info.normal = normal;
                 info.type = 1;
-                info.dist = min_dist;
+                info.dist = dist;
                 info.material_idx = 2;
                 exist = true;
             }
@@ -241,7 +238,6 @@ vec4 trace(vec3 origin, vec3 dir)
 {
     hitinfo info;
     hitinfo info2;
-    info2.material_idx = 0;
     int i, count = 0;
     vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
 
@@ -253,24 +249,26 @@ vec4 trace(vec3 origin, vec3 dir)
             if (info2.dist >= distance(info.point, vec3(0, 8, 0))) {  
                 result += dot(info.normal, to_light)
                     * dott(light1.diffuse, materials[info.material_idx].diffuse);
-                result += cos_bma(dot(-dir,info.normal), dot(info.normal, to_light))
-                    * dott(light1.specular, materials[info.material_idx].specular);
+                //result += cos_bma(dot(-dir,info.normal), dot(info.normal, to_light))
+                //    * dott(light1.specular, materials[info.material_idx].specular);
             }
         }
         else {
             vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
             result += dott(light1.ambient, materials[2].ambient);
-            result = vec4(0,1,0,1);
+            info.point += dir * 0.0001;
             intersect_objects(info.point, to_light, info2);
-            if (info2.dist >= distance(info.point, vec3(0, 8, 0))) {
+            if (info2.dist >= distance(info.point, vec3(0, 8, 0)))
+            {
+                vec3 reflect = normalize(-to_light - 2*dot(info.normal,-to_light)*info.normal);
                 result += dot(info.normal, to_light)
                     * dott(light1.diffuse, materials[2].diffuse);
-                result += dott(light1.specular, materials[2].specular);
-                result = vec4(1,0,0,1);
+                result += pow(max(dot(-dir, reflect), 0), 4)
+                    * dott(light1.specular, materials[2].specular);
             }
         }
     }
-
+    result[3] = 1;
     return result;
 }
 
@@ -279,15 +277,15 @@ void main()
     light1.pos = vec3(0, 10, 0);
     light1.ambient = vec4(1, 1, 1, 1);
     light1.diffuse = vec4(1, 1, 1, 1);
-    light1.specular = vec4(0.1, 0.1, 0.1, 1);
+    light1.specular = vec4(1, 1, 1, 1);
 
     materials[0].ambient = vec4(0.1, 0.0, 0.0, 1.0);
     materials[0].diffuse = vec4(0.5, 0.0, 0.0, 1.0);
     materials[1].ambient = vec4(0.0, 0.1, 0.0, 1.0);
     materials[1].diffuse = vec4(0.0, 0.5, 0.0, 1.0);
     materials[2].ambient = vec4(0.0, 0.0, 0.1, 1.0);
-    materials[2].specular = vec4(0.2, 0.2, 0.2, 1.0);
-    materials[2].diffuse = vec4(0.0, 0.0, 0.5, 1.0);
+    materials[2].specular = vec4(0.5, 0.5, 0.5, 1.0);
+    materials[2].diffuse = vec4(0.3, 0.3, 0.3, 1.0);
     materials[3].diffuse = vec4(0, 0, 0, 0);
     materials[3].ambient = vec4(0, 0, 0, 0);
 
@@ -297,8 +295,7 @@ void main()
     vec3 dir = normalize(mix(mix(ray00, ray01, pos.y), mix(ray10, ray11, pos.y), pos.x));
     vec4 pixel;
 
-    if(triangles_[2].nindex[1] == 5) pixel = trace(eye, dir);
-
+    pixel = trace(eye, dir);
     imageStore(framebuffer, pixel_coords, pixel);
 }
 
