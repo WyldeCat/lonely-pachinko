@@ -19,8 +19,9 @@ struct material {
 };
 
 struct triangle {
-    int index[4];
-    int nindex[4];
+    int index[4]; // pos idices + material idx
+    int nindex[4]; // n idices
+    int tindex[4]; // t idices + texture idx
 };
 
 struct sphere {
@@ -31,7 +32,9 @@ struct sphere {
 struct hitinfo {
     vec3 point;
     vec3 normal;
+    vec2 uv;
     int material_idx;
+    int texture_idx;
     int type;
     float dist;
 };
@@ -41,25 +44,31 @@ layout(binding = 0, rgba32f) uniform image2D framebuffer;
 
 layout (local_size_x = 1, local_size_y = 1) in;
 
-layout(binding = 1, std430) buffer vertices
+layout(binding = 11, std430) buffer vertices
 {
     float vertices_[MAX_NUM_VERTICES][3];
 };
 
-layout(binding = 2, std430) buffer n_vectors
+layout(binding = 12, std430) buffer n_vectors
 {
     float nvectors_[MAX_NUM_VERTICES][3];
 };
 
-layout(binding = 3, std430) buffer triangles
+layout(binding = 13, std430) buffer tvertices
+{
+    float tvertices_[MAX_NUM_VERTICES][2];
+};
+
+layout(binding = 14, std430) buffer triangles
 {
     triangle triangles_[MAX_NUM_VERTICES];
 };
 
-layout(binding = 4, std430) buffer spheres
+layout(binding = 15, std430) buffer spheres
 {
     sphere spheres_[MAX_NUM_VERTICES];
 };
+
 
 uniform int num_vertices;
 uniform int num_triangles;
@@ -76,7 +85,7 @@ light light1;
 material materials[5];
 
 bool intersect_triangle(vec3 origin, vec3 dir,
-    const triangle t, out vec3 p, out vec3 normal)
+    const triangle t, out vec3 p, out vec3 normal, out vec2 uv)
 {
     // TODO : Need to consider front and back
 
@@ -124,7 +133,13 @@ bool intersect_triangle(vec3 origin, vec3 dir,
             v * vec3(nvectors_[t.nindex[2]][0],
                 nvectors_[t.nindex[2]][1],
                 nvectors_[t.nindex[2]][2]);
-
+        uv = (1 - u - v) * 
+            vec2(tvertices_[t.tindex[0]][0], 
+                tvertices_[t.index[0]][1]) +
+            u * vec2(tvertices_[t.tindex[1]][0],
+                tvertices_[t.index[1]][1]) +
+            v * vec2(tvertices_[t.tindex[2]][0],
+                tvertices_[t.index[2]][1]);
         p = origin + tmp * dir;
         return true;
     }
@@ -184,12 +199,13 @@ bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
 {
     int i;
     vec3 p;
+    vec2 uv;
     vec3 normal;
     bool exist = false;
     float min_dist = 99999;
 
     for (i = 0; i < num_triangles; i++) {
-        if (intersect_triangle(origin, dir, triangles_[i], p, normal)) {
+        if (intersect_triangle(origin, dir, triangles_[i], p, normal, uv)) {
             float dist = distance(origin, p);
             if (min_dist > dist)
             {
@@ -198,6 +214,8 @@ bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
                 info.normal = normal;
                 info.type = 0;
                 info.dist = dist;
+                info.texture_idx = triangles_[i].tindex[3];
+                info.uv = uv;
                 info.material_idx = triangles_[i].index[3];
                 exist = true;
             }
@@ -228,10 +246,43 @@ vec4 dott(vec4 a, vec4 b)
     return vec4(a[0]*b[0], a[1]*b[1], a[2]*b[2], a[3]*b[3]);
 }
 
-float cos_bma(float cos_b, float cos_a)
-{ // compute cos(b-a)
-    return cos_b * cos_a + 
-        sqrt(1 - cos_b * cos_b) * sqrt(1 - cos_a * cos_a);
+vec4 reflect_trace(vec3 origin, vec3 dir)
+{
+    hitinfo info;
+    hitinfo info2;
+    int i, count = 0;
+    vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
+
+    if (intersect_objects(origin, dir, info)) {
+        if (info.type == 0) {
+            vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
+            result += dott(light1.ambient,materials[info.material_idx].ambient);
+            info.point -= dir * 0.0001;
+            intersect_objects(info.point, to_light, info2);
+            if (info2.dist >= distance(info.point, vec3(0, 8, 0))) {  
+                result += max(dot(info.normal, to_light), 0)
+                    * dott(light1.diffuse, materials[info.material_idx].diffuse);
+            }
+        }
+        else {
+            vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
+            result += dott(light1.ambient, materials[2].ambient);
+            info.point -= dir * 0.0001;
+
+            intersect_objects(info.point, to_light, info2);
+
+            if (info2.dist >= distance(info.point, vec3(0, 8, 0)))
+            {
+                vec3 reflect = normalize(-to_light - 2*dot(info.normal,-to_light)*info.normal);
+                result += dot(info.normal, to_light)
+                    * dott(light1.diffuse, materials[2].diffuse);
+                result += pow(max(dot(-dir, reflect), 0), 4)
+                    * dott(light1.specular, materials[2].specular);
+            }
+        }
+    }
+    result[3] = 1;
+    return result;
 }
 
 vec4 trace(vec3 origin, vec3 dir)
@@ -245,19 +296,24 @@ vec4 trace(vec3 origin, vec3 dir)
         if (info.type == 0) {
             vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
             result += dott(light1.ambient,materials[info.material_idx].ambient);
+            info.point -= dir * 0.0001;
             intersect_objects(info.point, to_light, info2);
             if (info2.dist >= distance(info.point, vec3(0, 8, 0))) {  
-                result += dot(info.normal, to_light)
+                result += max(dot(info.normal, to_light), 0)
                     * dott(light1.diffuse, materials[info.material_idx].diffuse);
-                //result += cos_bma(dot(-dir,info.normal), dot(info.normal, to_light))
-                //    * dott(light1.specular, materials[info.material_idx].specular);
             }
         }
         else {
+        
             vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
             result += dott(light1.ambient, materials[2].ambient);
-            info.point += dir * 0.0001;
+            info.point -= dir * 0.0001;
+
+            vec3 reflect_trace = normalize(dir - 2*dot(info.normal, dir) * info.normal);
+            vec4 reflect_result = reflect_trace(info.point, reflect_trace);
+
             intersect_objects(info.point, to_light, info2);
+
             if (info2.dist >= distance(info.point, vec3(0, 8, 0)))
             {
                 vec3 reflect = normalize(-to_light - 2*dot(info.normal,-to_light)*info.normal);
@@ -265,6 +321,7 @@ vec4 trace(vec3 origin, vec3 dir)
                     * dott(light1.diffuse, materials[2].diffuse);
                 result += pow(max(dot(-dir, reflect), 0), 4)
                     * dott(light1.specular, materials[2].specular);
+                result += reflect_result * materials[2].diffuse;
             }
         }
     }
@@ -281,11 +338,11 @@ void main()
 
     materials[0].ambient = vec4(0.1, 0.0, 0.0, 1.0);
     materials[0].diffuse = vec4(0.5, 0.0, 0.0, 1.0);
-    materials[1].ambient = vec4(0.0, 0.1, 0.0, 1.0);
-    materials[1].diffuse = vec4(0.0, 0.5, 0.0, 1.0);
+    materials[1].ambient = vec4(0.3, 0.3, 0.3, 1.0);
+    materials[1].diffuse = vec4(0.3, 0.3, 0.3, 1.0);
     materials[2].ambient = vec4(0.0, 0.0, 0.1, 1.0);
-    materials[2].specular = vec4(0.5, 0.5, 0.5, 1.0);
-    materials[2].diffuse = vec4(0.3, 0.3, 0.3, 1.0);
+    materials[2].specular = vec4(0.7, 0.7, 0.7, 1.0);
+    materials[2].diffuse = vec4(0.4, 0.4, 0.4, 1.0);
     materials[3].diffuse = vec4(0, 0, 0, 0);
     materials[3].ambient = vec4(0, 0, 0, 0);
 

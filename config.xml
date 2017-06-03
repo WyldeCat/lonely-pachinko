@@ -1,26 +1,22 @@
-<simulator scale = "10">
+<simulator scale = "60">
   <object-list>
 
     <object type="mesh">
-      <file>models/cube.obj</file>
+      <file>models/room.obj</file>
+      <texture>models/floor.bmp</texture>
       <material>1</material>
     </object>
     
-    <object type="mesh">
-      <file>models/wall.obj</file>
-      <material>0</material>
+    <object type="sphere">
+      <pos>8.0 -16.9 0.0</pos>
+      <radius>1.0</radius>
     </object>
 
-    <object type="mesh">
-      <file>models/world.obj</file>
-      <material>3</material>
+    <object type="sphere">
+      <pos>-5.0 -16.9 3.0</pos>
+      <radius>1.0</radius>
     </object>
     
-    <object type="sphere">
-      <pos>8.0 0.0 0.0</pos>
-      <radius>2.0</radius>
-    </object>
-
   </object-list>
   
   <light-list>

@@ -78,6 +78,7 @@ private:
    
     void load_shaders(const pugi::xml_node& shader_list);
     void load_objects(const pugi::xml_node& obj_list);
+    GLuint load_texture(unsigned char* buffer, int width, int height);
 
     void process_input();
     bool check_program();
@@ -106,11 +107,15 @@ private:
     GLint num_spheres_uniform_;
 
     GLuint vertices_ssbo_;
+    GLuint tvertices_ssbo_;
     GLuint nvectors_ssbo_;
     GLuint triangles_ssbo_;
     GLuint spheres_ssbo_;
 
     GLuint texture_;
+    GLuint textures_[10];
+    GLuint textures_cnt_;
+    
     GLuint vertex_buffer_object_;
 
     glm::mat4 world_;
@@ -136,6 +141,7 @@ private:
     bool first_touch;
 
     std::vector<glm::vec3> vertices_; // static vertex
+    std::vector<glm::vec2> tvertices_;
     std::vector<glm::vec3> nvectors_;
     std::vector<glm::ivec4> faces_;
     std::vector<glm::vec3> vertices__;

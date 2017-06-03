@@ -73,6 +73,7 @@ public:
 
         int GetVertexIdx(int idx) { return vertices_[idx]; }
         int GetNormalIdx(int idx) { return normals_[idx]; }
+        int GetTextureIdx(int idx) { return textures_[idx]; }
         
         std::shared_ptr<Vertex> GetVertex(int idx)
         {
@@ -95,7 +96,8 @@ public:
         std::vector<int> textures_;
     };
 
-    Mesh(const std::string& obj_file, int material_idx);
+    Mesh(const std::string& obj_file, const std::string& texture_file,
+        int material_idx);
 
     const std::vector<std::unique_ptr<Face>>& GetFaces() { return faces_; }
     const std::vector<std::shared_ptr<Vertex>>& GetVertices()
@@ -108,10 +110,25 @@ public:
         return normals_;
     }
 
-    const int GetMaterialIdx() { return material_idx_; }
+    const std::vector<std::shared_ptr<glm::vec2>>& GetTextures()
+    {
+        return textures_;
+    }
+
+    int GetMaterialIdx() { return material_idx_; }
+
+    unsigned char* GetTexture() { return texture_; }
+    int GetTextureWidth() { return width_; }
+    int GetTextureHeight() { return height_; }
 
 private:
+    void load_texture(const std::string& texture_file);
     int material_idx_;
+    
+    unsigned char* texture_;
+    int width_;
+    int height_;
+
     std::vector<std::unique_ptr<Face>> faces_;
     std::vector<std::shared_ptr<Vertex>> vertices_;
 

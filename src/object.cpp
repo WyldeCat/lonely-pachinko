@@ -25,7 +25,8 @@ Mesh::Face::Face(std::vector<Token>& tokens, Mesh& mesh)
     });
 }
 
-Mesh::Mesh(const std::string& obj_file, int material_idx)
+Mesh::Mesh(const std::string& obj_file, const std::string& texture_file,
+    int material_idx)
     : material_idx_(material_idx)
 {
     std::fstream obj(obj_file);
@@ -63,4 +64,27 @@ Mesh::Mesh(const std::string& obj_file, int material_idx)
     } else {
         std::cerr << "# ERR: Can't open " << obj_file.data() << std::endl;
     }
+
+    load_texture(texture_file);
 } 
+
+void Mesh::load_texture(const std::string& texture_file)
+{
+    unsigned char header[54]; // Each BMP file begins by a 54-bytes header
+    unsigned int data_pos;     // Position in the file where the actual data begins
+    unsigned int image_size;   // = width*height*3
+                              // Actual RGB data
+    
+    FILE *file = fopen(texture_file.data(), "rb");
+    fread(header, 1, 54, file);
+
+    data_pos = *(int*)&(header[0x0A]);
+    image_size = *(int*)&(header[0x22]);
+    width_ = *(int*)&(header[0x12]);
+    height_ = *(int*)&(header[0x16]);
+
+    texture_ = new unsigned char[image_size];
+
+    fread(texture_, 1, image_size, file);
+    fclose(file);
+}
