@@ -155,7 +155,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\phy_engine.cpp" />
-    <ClCompile Include="src\test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\math.hpp" />
