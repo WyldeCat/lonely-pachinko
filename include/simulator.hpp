@@ -27,6 +27,8 @@
 #include "object.hpp"
 #include "shader.hpp"
 
+#include <Windows.h>
+
 class Simulator;
 
 class Camera {
@@ -85,7 +87,7 @@ private:
     
     void compute();
     void render();
-    void pause();
+    void save(int idx);
 
     GLFWwindow* window_;
     
@@ -138,6 +140,12 @@ private:
     int scale_;
 
     short key_stat[300]; // GL_PRESS, GL_REPEAT, GL_RELEASE
+
+    unsigned char* buffer_for_save_;
+
+    BITMAPFILEHEADER file_header_;
+    BITMAPINFOHEADER info_header_;
+
     bool first_touch;
 
     std::vector<glm::vec3> vertices_; // static vertex

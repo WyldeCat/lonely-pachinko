@@ -6,6 +6,12 @@
       <texture>models/floor.bmp</texture>
       <material>1</material>
     </object>
+
+    <object type="mesh">
+      <file>models/chair.obj</file>
+      <texture>models/floor.bmp</texture>
+      <material>1</material>
+    </object>
     
     <object type="sphere">
       <pos>8.0 -16.9 0.0</pos>
@@ -16,24 +22,7 @@
       <pos>-5.0 -16.9 3.0</pos>
       <radius>1.0</radius>
     </object>
-    
   </object-list>
-  
-  <light-list>
-    <light type="point">
-      <pos>3.0 3.0 3.0</pos>
-      <ambient>0.0 0.0 0.0 1.0</ambient>
-      <diffuse>1.0 0.1 0.1 1.0</diffuse>
-      <specular>1.0 0.1 0.1 1.0</specular>
-    </light>
-    <light type="spot">
-      <pos>7.0 7.0 7.0</pos>
-      <dir>-1.0 0.0 0.0</dir>
-      <ambient>0.0 0.0 0.0 1.0</ambient>
-      <diffuse>0.1 0.1 1.0 1.0</diffuse>
-      <specular>0.1 0.1 1.0 1.0</specular>
-    </light>
-  </light-list>
   
   <shader-list>
     <shader type="vert">shaders/basic_shader.glvs</shader>
@@ -42,3 +31,5 @@
   </shader-list>
   
 </simulator>
+
+

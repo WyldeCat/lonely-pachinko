@@ -246,7 +246,7 @@ vec4 dott(vec4 a, vec4 b)
     return vec4(a[0]*b[0], a[1]*b[1], a[2]*b[2], a[3]*b[3]);
 }
 
-vec4 reflect_trace(vec3 origin, vec3 dir)
+vec4 reflect_trace_(vec3 origin, vec3 dir)
 {
     hitinfo info;
     hitinfo info2;
@@ -267,7 +267,7 @@ vec4 reflect_trace(vec3 origin, vec3 dir)
         else {
             vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
             result += dott(light1.ambient, materials[2].ambient);
-            info.point -= dir * 0.0001;
+            info.point -= dir * 0.001;
 
             intersect_objects(info.point, to_light, info2);
 
@@ -276,7 +276,7 @@ vec4 reflect_trace(vec3 origin, vec3 dir)
                 vec3 reflect = normalize(-to_light - 2*dot(info.normal,-to_light)*info.normal);
                 result += dot(info.normal, to_light)
                     * dott(light1.diffuse, materials[2].diffuse);
-                result += pow(max(dot(-dir, reflect), 0), 4)
+                result += pow(max(dot(-dir, reflect), 0), 89)
                     * dott(light1.specular, materials[2].specular);
             }
         }
@@ -302,15 +302,20 @@ vec4 trace(vec3 origin, vec3 dir)
                 result += max(dot(info.normal, to_light), 0)
                     * dott(light1.diffuse, materials[info.material_idx].diffuse);
             }
+            result += max(dot(info.normal, vec3(-1,0,0))*0.3, 0) *
+                dott(light1.diffuse, materials[info.material_idx].diffuse);
+            result += max(dot(info.normal, vec3(0,0,1))*0.3, 0) *
+                dott(light1.diffuse, materials[info.material_idx].diffuse);
         }
         else {
         
             vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
             result += dott(light1.ambient, materials[2].ambient);
-            info.point -= dir * 0.0001;
+            info.point += dir * 0.001;
 
             vec3 reflect_trace = normalize(dir - 2*dot(info.normal, dir) * info.normal);
-            vec4 reflect_result = reflect_trace(info.point, reflect_trace);
+            vec4 reflect_result = reflect_trace_(info.point, reflect_trace);
+            result += dott(reflect_result, materials[2].ambient);
 
             intersect_objects(info.point, to_light, info2);
 
@@ -319,9 +324,13 @@ vec4 trace(vec3 origin, vec3 dir)
                 vec3 reflect = normalize(-to_light - 2*dot(info.normal,-to_light)*info.normal);
                 result += dot(info.normal, to_light)
                     * dott(light1.diffuse, materials[2].diffuse);
-                result += pow(max(dot(-dir, reflect), 0), 4)
+                result += pow(max(dot(-dir, reflect), 0), 89)
                     * dott(light1.specular, materials[2].specular);
-                result += reflect_result * materials[2].diffuse;
+                //result += dott(reflect_result, dot(info.normal, to_light) * materials[2].diffuse);
+            } 
+            else 
+            {
+                
             }
         }
     }
@@ -340,9 +349,9 @@ void main()
     materials[0].diffuse = vec4(0.5, 0.0, 0.0, 1.0);
     materials[1].ambient = vec4(0.3, 0.3, 0.3, 1.0);
     materials[1].diffuse = vec4(0.3, 0.3, 0.3, 1.0);
-    materials[2].ambient = vec4(0.0, 0.0, 0.1, 1.0);
-    materials[2].specular = vec4(0.7, 0.7, 0.7, 1.0);
-    materials[2].diffuse = vec4(0.4, 0.4, 0.4, 1.0);
+    materials[2].ambient = vec4(0.10, 0.10, 0.10, 1.0);
+    materials[2].specular = vec4(0.77, 0.77, 0.77, 1.0);
+    materials[2].diffuse = vec4(0.28, 0.28, 0.28, 1.0);
     materials[3].diffuse = vec4(0, 0, 0, 0);
     materials[3].ambient = vec4(0, 0, 0, 0);
 

@@ -508,6 +508,24 @@ bool Simulator::initialize(const std::string& xml_url)
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
 	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_DRAW);
 
+    buffer_for_save_ = new unsigned char[width_ * height_ * 3];
+    
+    file_header_.bfType = 0x4D42;
+    file_header_.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + (width_ * height_ * 3);
+    file_header_.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+    info_header_.biSize = sizeof(BITMAPINFOHEADER);
+    info_header_.biWidth = width_;
+    info_header_.biHeight = height_;
+    info_header_.biPlanes = 1;
+    info_header_.biBitCount = 24;
+    info_header_.biCompression = BI_RGB;
+    info_header_.biSizeImage = width_ * height_ * 3;
+    info_header_.biXPelsPerMeter = 0;
+    info_header_.biYPelsPerMeter = 0;
+    info_header_.biClrUsed = 0;
+    info_header_.biClrImportant = 0;
+
     return true;
 }
 
@@ -518,12 +536,14 @@ void Simulator::Start()
 
 void Simulator::start()
 {
-    while (!glfwWindowShouldClose(window_)) {
+    // TODO : Check config.xml
+    for (int i = 0; i < 10; i++) 
+    {
         process_input();
         compute();
         render();
+        save(i);
         glfwSwapBuffers(window_);
-        glfwPollEvents();
     }
 }
 
@@ -644,9 +664,17 @@ void Simulator::render()
     glUseProgram(0);
 }
 
-void Simulator::pause()
+void Simulator::save(int idx)
 {
-    // TODO : Not implemented
+    std::string file_name = "result" + std::to_string(idx) + ".bmp";
+    FILE *file = fopen(file_name.data(), "w");
+    glReadPixels(0, 0, width_, height_, GL_RGB, GL_UNSIGNED_BYTE, buffer_for_save_);
+
+    fwrite(&file_header_, 1, sizeof(BITMAPFILEHEADER), file);
+    fwrite(&info_header_, 1, sizeof(BITMAPINFOHEADER), file);
+    fwrite(buffer_for_save_, 1, width_ * height_ * 3, file);
+    
+    fclose(file);
 }
 
 bool Simulator::check_program()
