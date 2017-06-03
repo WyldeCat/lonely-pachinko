@@ -1,5 +1,5 @@
 #include "pmframework.hpp"
-#include <iostream>
+
 namespace pmframework
 {
     Vector3d gravity(0, -9.8f, 0);
@@ -7,8 +7,8 @@ namespace pmframework
 
     Simulation::Simulation()
     {
-        CollisionState = Clear;
-        CollisionType = None;
+        collisionState = Clear;
+        collisionType = None;
         sourceConfigurationIndex = 0;
         targetConfigurationIndex = 1;
     }
@@ -39,7 +39,7 @@ namespace pmframework
 
             CheckForCollisions(targetConfigurationIndex);
 
-            if (CollisionState == Penetrating)
+            if (collisionState == Penetrating)
             {
                 targetTime = (currentTime + targetTime) / 2.0;
 
@@ -88,7 +88,7 @@ namespace pmframework
             RigidBody::configuration &Source = Balls[Counter]->aConfiguration[sourceConfigurationIndex];
             RigidBody::configuration &Target = Balls[Counter]->aConfiguration[targetConfigurationIndex];
 
-            Source.velocity *= frictionCoefficient;
+            Source.velocity *= frictionCoefficient; //apply friction 
 
             Target.position = Source.position + DeltaTime * Source.velocity;
 
@@ -110,13 +110,13 @@ namespace pmframework
 
     Simulation::collision_state Simulation::CheckForCollisions(int ConfigurationIndex)
     {
-        CollisionState = Clear;
+        collisionState = Clear;
         float const DepthEpsilon = 0.01f;
 
-        for (int i = 0; (i < Balls.size()) && (CollisionState != Penetrating); ++i) {
+        for (int i = 0; (i < Balls.size()) && (collisionState != Penetrating); ++i) {
             RigidBody *Body1 = Balls[i];
             RigidBody::configuration &Configuration1 = Body1->aConfiguration[ConfigurationIndex];
-            for (int j = i + 1; j < Balls.size() && (CollisionState != Penetrating); ++j) {
+            for (int j = i + 1; j < Balls.size() && (collisionState != Penetrating); ++j) {
                 RigidBody *Body2 = Balls[j];
                 RigidBody::configuration &Configuration2 = Body2->aConfiguration[ConfigurationIndex];
 
@@ -124,12 +124,12 @@ namespace pmframework
                 scalar distance = distanceVector.norm() - Body1->boundingSphereRadius - Body2->boundingSphereRadius;
 
                 if (distance < -DepthEpsilon) {
-                    CollisionState = Penetrating;
+                    collisionState = Penetrating;
                 }
                 else {
                     if (distance < DepthEpsilon) {
-                        CollisionState = Colliding;
-                        CollisionType = SphereSphere;
+                        collisionState = Colliding;
+                        collisionType = SphereSphere;
                         collisionNormal = (Configuration1.position - Configuration2.position).normalize(SCALAR_TOLERANCE);
                         collisionBodyIndex1 = i;
                         collisionBodyIndex2 = j;
@@ -140,7 +140,7 @@ namespace pmframework
                 }
             }
 
-            for (int WallIndex = 0; (WallIndex < Walls.size()) && (CollisionState != Penetrating); WallIndex++) {
+            for (int WallIndex = 0; (WallIndex < Walls.size()) && (collisionState != Penetrating); WallIndex++) {
 
                 Plane *wall = Walls[WallIndex];
 
@@ -150,7 +150,7 @@ namespace pmframework
 
                 if (distance < -DepthEpsilon) {
                     if (colliding) {
-                        CollisionState = Penetrating;
+                        collisionState = Penetrating;
                     }
                     else {
                         //a sphere collides with the expanded trangle
@@ -162,8 +162,8 @@ namespace pmframework
                             Vector3d center = Configuration1.position;
                             scalar t = -(wall->NormalVector().dotProduct(Configuration1.position) + wall->D()) / wall->NormalVector().normSquared();
                             collisionPoint = Vector3d(wall->A()*t + center.X(), wall->B()*t + center.Y(), wall->C()*t + center.Z());
-                            CollisionState = Colliding;
-                            CollisionType = SpherePlane;
+                            collisionState = Colliding;
+                            collisionType = SpherePlane;
                             collisionNormal = wall->NormalVector();
                             collisionBodyIndex1 = i;
                             collisionPlaneIndex = WallIndex;
@@ -179,7 +179,7 @@ namespace pmframework
 
             }
         }
-        return CollisionState;
+        return collisionState;
     }
 
     void Simulation::ResolveSphereSphereCollisions(int configurationIndex)

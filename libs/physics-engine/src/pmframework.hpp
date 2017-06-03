@@ -3,7 +3,6 @@
 #include <string>
 #include <assert.h>
 #include <cmath>
-//#include <Windows.h>
 
 #include "math.hpp"
 #include "point_mass.hpp"

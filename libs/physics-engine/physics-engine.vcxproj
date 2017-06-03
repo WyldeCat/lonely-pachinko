@@ -154,7 +154,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\math.cpp" />
     <ClCompile Include="src\phy_engine.cpp" />
+    <ClCompile Include="src\plane.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\math.hpp" />

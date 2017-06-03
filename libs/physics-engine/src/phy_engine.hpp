@@ -16,8 +16,6 @@ namespace pmframework
         void SourceConfiguration(int index);
         int TargetConfiguration(void);
         void TargetConfiguration(int index);
-        Vector3d CollisionPoint(void);
-        void CollisionPoint(Vector3d point);
         void AddBody(RigidBody *body);
         void AddPlane(Plane *plane);
 
@@ -27,14 +25,14 @@ namespace pmframework
             Penetrating,
             Colliding,
             Clear
-        } CollisionState;
+        } collisionState;
 
         enum collision_type
         {
             None,
             SphereSphere,
             SpherePlane
-        } CollisionType;
+        } collisionType;
 
         Vector3d collisionPoint;
         Vector3d collisionNormal;
@@ -74,16 +72,6 @@ namespace pmframework
     inline void Simulation::TargetConfiguration(int newIndex)
     {
         targetConfigurationIndex = newIndex;
-    }
-
-    inline Vector3d Simulation::CollisionPoint(void)
-    {
-        return collisionPoint;
-    }
-
-    inline void Simulation::CollisionPoint(Vector3d point)
-    {
-        collisionPoint = point;
     }
 
     inline void Simulation::AddBody(RigidBody * body)
