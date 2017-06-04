@@ -21,37 +21,37 @@ namespace pmframework
         friend class Simulation;
 
     public:
-        RigidBody(void);
+        PHYSICSENGINE_API RigidBody(void);
 
-        void Position(Vector3d positionCenterOfMass);
-        Vector3d Position(int configurationIndex);
+        PHYSICSENGINE_API void Position(Vector3d positionCenterOfMass);
+        PHYSICSENGINE_API Vector3d Position(int configurationIndex);
 
-        void Velocity(Vector3d newVelocity);
-        Vector3d Velocity(int configurationIndex);
+        PHYSICSENGINE_API void Velocity(Vector3d newVelocity);
+        PHYSICSENGINE_API Vector3d Velocity(int configurationIndex);
 
-        void SumForce(Vector3d sumExternalForces);
-        Vector3d SumForce(int configurationIndex);
+        PHYSICSENGINE_API void SumForce(Vector3d sumExternalForces);
+        PHYSICSENGINE_API Vector3d SumForce(int configurationIndex);
 
-        virtual void InverseBodyInertiaTensor(Matrix3x3 inverseInertiaValue);
-        virtual Matrix3x3 InverseBodyInertiaTensor(void);
+        PHYSICSENGINE_API virtual void InverseBodyInertiaTensor(Matrix3x3 inverseInertiaValue);
+        PHYSICSENGINE_API virtual Matrix3x3 InverseBodyInertiaTensor(void);
 
-        virtual void AngularMomentum(Vector3d angularMomentumValue);
-        virtual Vector3d AngularMomentum(int configurationIndex);
+        PHYSICSENGINE_API virtual void AngularMomentum(Vector3d angularMomentumValue);
+        PHYSICSENGINE_API virtual Vector3d AngularMomentum(int configurationIndex);
 
-        virtual void Torque(Vector3d torqueValue);
-        virtual Vector3d Torque(int configurationIndex);
+        PHYSICSENGINE_API virtual void Torque(Vector3d torqueValue);
+        PHYSICSENGINE_API virtual Vector3d Torque(int configurationIndex);
 
-        virtual void Orientation(Matrix3x3 newOrientation);
-        virtual Matrix3x3 Orientation(int configurationIndex);
+        PHYSICSENGINE_API virtual void Orientation(Matrix3x3 newOrientation);
+        PHYSICSENGINE_API virtual Matrix3x3 Orientation(int configurationIndex);
 
-        virtual void InverseWorldInertiaTensor(Matrix3x3 inverseInertiaValue);
-        virtual Matrix3x3 InverseWorldInertiaTensor(int configurationIndex);
+        PHYSICSENGINE_API virtual void InverseWorldInertiaTensor(Matrix3x3 inverseInertiaValue);
+        PHYSICSENGINE_API virtual Matrix3x3 InverseWorldInertiaTensor(int configurationIndex);
 
-        virtual void AngularVelocity(Vector3d velocity);
-        virtual Vector3d AngularVelocity(int configurationIndex);
+        PHYSICSENGINE_API virtual void AngularVelocity(Vector3d velocity);
+        PHYSICSENGINE_API virtual Vector3d AngularVelocity(int configurationIndex);
 
-        virtual void RotationalInertia(Vector3d inertiaValue);
-        virtual Vector3d RotationalInertia(int configurationIndex);
+        PHYSICSENGINE_API virtual void RotationalInertia(Vector3d inertiaValue);
+        PHYSICSENGINE_API virtual Vector3d RotationalInertia(int configurationIndex);
     };
 
     inline RigidBody::RigidBody(void)

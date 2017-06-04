@@ -13,41 +13,41 @@ namespace pmframework
         scalar x, y, z;
 
     public:
-        Vector3d(void);
-        Vector3d(scalar xComponent, scalar yComponent, scalar zComponent);
-        Vector3d(const Vector3d &rightOperand);
+        PHYSICSENGINE_API Vector3d(void);
+        PHYSICSENGINE_API Vector3d(scalar xComponent, scalar yComponent, scalar zComponent);
+        PHYSICSENGINE_API Vector3d(const Vector3d &rightOperand);
 
-        void X(scalar xComponent);
-        scalar X(void);
+        PHYSICSENGINE_API void X(scalar xComponent);
+        PHYSICSENGINE_API scalar X(void);
 
-        void Y(scalar yComponent);
-        scalar Y(void);
+        PHYSICSENGINE_API void Y(scalar yComponent);
+        PHYSICSENGINE_API scalar Y(void);
 
-        void Z(scalar zComponent);
-        scalar Z(void);
+        PHYSICSENGINE_API void Z(scalar zComponent);
+        PHYSICSENGINE_API scalar Z(void);
 
-        void SetXYZ(scalar xComponent, scalar yComponent, scalar zComponent);
-        void GetXYZ(scalar &xCompoenet, scalar &yComponent, scalar &zComponent);
+        PHYSICSENGINE_API void SetXYZ(scalar xComponent, scalar yComponent, scalar zComponent);
+        PHYSICSENGINE_API void GetXYZ(scalar &xCompoenet, scalar &yComponent, scalar &zComponent);
 
-        Vector3d &operator = (const Vector3d &rightOperand);
+        PHYSICSENGINE_API Vector3d &operator = (const Vector3d &rightOperand);
 
-        Vector3d operator +(const Vector3d &rightOperand);
-        Vector3d operator +=(const Vector3d &rightOperand);
-        Vector3d operator -(const Vector3d &rightOperand);
-        Vector3d operator -=(const Vector3d &rightOperand);
-        Vector3d operator *(scalar rightOperand);
+        PHYSICSENGINE_API Vector3d operator +(const Vector3d &rightOperand);
+        PHYSICSENGINE_API Vector3d operator +=(const Vector3d &rightOperand);
+        PHYSICSENGINE_API Vector3d operator -(const Vector3d &rightOperand);
+        PHYSICSENGINE_API Vector3d operator -=(const Vector3d &rightOperand);
+        PHYSICSENGINE_API Vector3d operator *(scalar rightOperand);
         friend Vector3d operator *(scalar leftOperand, const Vector3d &rightOperand);
 
-        Vector3d operator *=(scalar rightOperand);
-        Vector3d operator /(scalar rightOperand);
-        Vector3d operator /=(scalar rightOperand);
+        PHYSICSENGINE_API Vector3d operator *=(scalar rightOperand);
+        PHYSICSENGINE_API Vector3d operator /(scalar rightOperand);
+        PHYSICSENGINE_API void operator /=(scalar rightOperand);
 
-        scalar dotProduct(const Vector3d &v1);
-        scalar norm(void);
-        scalar normSquared(void);
+        PHYSICSENGINE_API scalar dotProduct(const Vector3d &v1);
+        PHYSICSENGINE_API scalar norm(void);
+        PHYSICSENGINE_API scalar normSquared(void);
 
-        Vector3d crossProduct(const Vector3d &rightOperand);
-        Vector3d normalize(scalar tolerance);
+        PHYSICSENGINE_API Vector3d crossProduct(const Vector3d &rightOperand);
+        PHYSICSENGINE_API Vector3d normalize(scalar tolerance);
 
     };
 
@@ -168,7 +168,7 @@ namespace pmframework
         return (Vector3d(x / rightOperand, y / rightOperand, z / rightOperand));
     }
 
-    inline Vector3d Vector3d::operator /=(scalar rightOperand)
+    inline void Vector3d::operator /=(scalar rightOperand)
     {
         x /= rightOperand;
         y /= rightOperand;
@@ -217,26 +217,26 @@ namespace pmframework
     {
     public:
 
-        Matrix3x3(void);
-        Matrix3x3(scalar(*pElements)[3]);
+        PHYSICSENGINE_API Matrix3x3(void);
+        PHYSICSENGINE_API Matrix3x3(scalar(*pElements)[3]);
 
         enum mode { SkewSymmetric, Zero };
-        inline Matrix3x3(mode MustBeZero);
-        inline Matrix3x3(Vector3d CrossVector, mode MustBeSkewSymmetric);
+        PHYSICSENGINE_API inline Matrix3x3(mode MustBeZero);
+        PHYSICSENGINE_API inline Matrix3x3(Vector3d CrossVector, mode MustBeSkewSymmetric);
 
-        inline Matrix3x3 &operator+=(Matrix3x3 const &A);
+        PHYSICSENGINE_API inline Matrix3x3 &operator+=(Matrix3x3 const &A);
 
-        inline scalar &operator()(int unsigned Row, int unsigned Column);
-        inline scalar const &operator()(int unsigned Row, int unsigned Column) const;
+        PHYSICSENGINE_API inline scalar &operator()(int unsigned Row, int unsigned Column);
+        PHYSICSENGINE_API inline scalar const &operator()(int unsigned Row, int unsigned Column) const;
 
-        inline scalar GetElement(int Row, int Column) const;
-        inline Matrix3x3 &SetElement(int Row, int Column, scalar Value);
+        PHYSICSENGINE_API inline scalar GetElement(int Row, int Column) const;
+        PHYSICSENGINE_API inline Matrix3x3 &SetElement(int Row, int Column, scalar Value);
 
     protected:
 
         enum do_not_initialize { DoNotInitialize };
 
-        inline Matrix3x3(do_not_initialize);
+        PHYSICSENGINE_API inline Matrix3x3(do_not_initialize);
 
         scalar aElements[3][3];
     };
@@ -254,7 +254,7 @@ namespace pmframework
         return aElements[Row][Column];
     }
 
-    void OrthonormalizeOrientation(Matrix3x3 &Orientation);
+    PHYSICSENGINE_API void OrthonormalizeOrientation(Matrix3x3 &Orientation);
 
     inline scalar Matrix3x3::GetElement(int Row, int Column) const
     {
@@ -323,9 +323,9 @@ namespace pmframework
         return Return;
     }
 
-    Matrix3x3 operator*(Matrix3x3 const &Multiplicand, Matrix3x3 const &Multiplier);
+    PHYSICSENGINE_API Matrix3x3 operator*(Matrix3x3 const &Multiplicand, Matrix3x3 const &Multiplier);
 
-    Vector3d operator*(Matrix3x3 const &Multiplicand, Vector3d Multiplier);
+    PHYSICSENGINE_API Vector3d operator*(Matrix3x3 const &Multiplicand, Vector3d Multiplier);
 
     inline Matrix3x3 operator+(Matrix3x3 const &Operand1, Matrix3x3 const &Operand2)
     {
@@ -400,6 +400,4 @@ namespace pmframework
 
         return Return;
     }
-
-
 }

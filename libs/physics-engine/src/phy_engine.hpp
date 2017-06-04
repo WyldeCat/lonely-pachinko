@@ -1,4 +1,6 @@
 #pragma once
+#include "pmframework.hpp"
+
 #include <vector>
 
 namespace pmframework
@@ -7,17 +9,17 @@ namespace pmframework
     class Simulation
     {
     public:
-        Simulation();
-        void SimulateUnitTime(scalar DeltaTime);
-        void Simulate(scalar executuionTime);
-        ~Simulation(void);
+        PHYSICSENGINE_API Simulation();
+        PHYSICSENGINE_API void SimulateUnitTime(scalar DeltaTime);
+        PHYSICSENGINE_API void Simulate(scalar executuionTime);
+        PHYSICSENGINE_API ~Simulation(void);
 
-        int SourceConfiguration(void);
-        void SourceConfiguration(int index);
-        int TargetConfiguration(void);
-        void TargetConfiguration(int index);
-        void AddBody(RigidBody *body);
-        void AddPlane(Plane *plane);
+        PHYSICSENGINE_API int SourceConfiguration(void);
+        PHYSICSENGINE_API void SourceConfiguration(int index);
+        PHYSICSENGINE_API int TargetConfiguration(void);
+        PHYSICSENGINE_API void TargetConfiguration(int index);
+        PHYSICSENGINE_API void AddBody(RigidBody *body);
+        PHYSICSENGINE_API void AddPlane(Plane *plane);
 
     private:
         enum collision_state

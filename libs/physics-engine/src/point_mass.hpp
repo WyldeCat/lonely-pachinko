@@ -25,25 +25,25 @@ namespace pmframework
 
     public:
 
-        PointMass(void);
+        PHYSICSENGINE_API PointMass(void);
 
-        void Mass(scalar massValue);
-        scalar Mass(void);
+        PHYSICSENGINE_API void Mass(scalar massValue);
+        PHYSICSENGINE_API scalar Mass(void);
 
-        void BoundingSphereRadius(scalar sphereRadius);
-        scalar BoundingSphereRadius(void);
+        PHYSICSENGINE_API void BoundingSphereRadius(scalar sphereRadius);
+        PHYSICSENGINE_API scalar BoundingSphereRadius(void);
 
-        void Restitution(scalar elasticity);
-        scalar Restitution(void);
+        PHYSICSENGINE_API void Restitution(scalar elasticity);
+        PHYSICSENGINE_API scalar Restitution(void);
 
-        void Position(Vector3d positionCenterOfMass);
-        Vector3d Position(int configurationIndex);
+        PHYSICSENGINE_API void Position(Vector3d positionCenterOfMass);
+        PHYSICSENGINE_API Vector3d Position(int configurationIndex);
 
-        void Velocity(Vector3d newVelocity);
-        Vector3d Velocity(int configurationIndex);
+        PHYSICSENGINE_API void Velocity(Vector3d newVelocity);
+        PHYSICSENGINE_API Vector3d Velocity(int configurationIndex);
 
-        void SumForce(Vector3d sumExternalForces);
-        Vector3d SumForce(int configurationIndex);
+        PHYSICSENGINE_API void SumForce(Vector3d sumExternalForces);
+        PHYSICSENGINE_API Vector3d SumForce(int configurationIndex);
     };
 
 

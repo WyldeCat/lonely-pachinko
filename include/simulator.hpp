@@ -29,6 +29,9 @@
 
 #include <Windows.h>
 
+/* pmframework */
+#include "../libs/physics-engine/src/pmframework.hpp"
+
 class Simulator;
 
 class Camera {
@@ -80,6 +83,7 @@ private:
    
     void load_shaders(const pugi::xml_node& shader_list);
     void load_objects(const pugi::xml_node& obj_list);
+
     GLuint load_texture(unsigned char* buffer, int width, int height);
 
     void process_input();
@@ -87,6 +91,7 @@ private:
     
     void compute();
     void render();
+    void simulate();
     void save(int idx);
 
     GLFWwindow* window_;
@@ -154,6 +159,9 @@ private:
     std::vector<glm::ivec4> faces_;
     std::vector<glm::vec3> vertices__;
     std::vector<glm::vec4> spheres_;
+    std::vector<pmframework::RigidBody*> phy_spheres_;
+
+    pmframework::Simulation simulation_;
 };
 
 #endif

@@ -210,7 +210,7 @@ void Simulator::mouse_mov_callback(double x, double y)
 Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
     : width_(width)
     , height_(height)
-    , curr_camera_(pos, glm::vec3(0.5, 0, -0.5), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
+    , curr_camera_(pos, glm::vec3(0.0, -0.1, -0.5), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
 {
     window_ = NULL;
 
@@ -371,11 +371,13 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
     int offset_n = 0;
     int offset_t = 0;
     textures_cnt_ = 0;
+
     for (auto& object : objects_)
     {
         auto mesh = dynamic_cast<Mesh*>(object.get());
         auto sphere = dynamic_cast<Sphere*>(object.get());
         if (mesh) {
+
             for (auto& vertex : mesh->GetVertices()) {
                 vertices__.push_back(vertex->pos_);
             }
@@ -407,6 +409,26 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
                     faces_.back()[i] = face->GetTextureIdx(i) + offset_t;
                 }
                 faces_.back()[3] = textures_cnt_;
+
+                // HACK
+
+                pmframework::Plane* plane = new pmframework::Plane();
+
+                pmframework::Vector3d vec1(vertices__[face->GetVertices()[0]].x,
+                    vertices__[face->GetVertices()[0]].y,
+                    vertices__[face->GetVertices()[0]].z);
+
+                pmframework::Vector3d vec2(vertices__[face->GetVertices()[1]].x,
+                    vertices__[face->GetVertices()[1]].y,
+                    vertices__[face->GetVertices()[1]].z);
+
+                pmframework::Vector3d vec3(vertices__[face->GetVertices()[2]].x,
+                    vertices__[face->GetVertices()[2]].y,
+                    vertices__[face->GetVertices()[2]].z);
+
+                plane->SetPlane(vec1, vec2, vec3);
+
+                simulation_.AddPlane(plane);
             }
             offset = vertices__.size();
             offset_n = nvectors_.size();
@@ -417,6 +439,28 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
         else if (sphere) {
             spheres_.push_back(glm::vec4(sphere->GetPos(),
                 sphere->GetRadius()));
+
+            // HACK
+            glm::vec3 pos = sphere->GetPos();
+
+            pmframework::RigidBody* sphere = new pmframework::RigidBody();
+
+            sphere->Mass(10);
+            sphere->Position(pmframework::Vector3d(pos.x, pos.y, pos.z));
+            sphere->Restitution(0.8);
+            sphere->Velocity(pmframework::Vector3d(0, 0, 0));
+            sphere->RotationalInertia(pmframework::Vector3d(1, 2, 3));
+
+            pmframework::Matrix3x3 m;
+            m(0, 0) = (3.0 / sphere->Mass()) * (pos.y * pos.y + pos.z * pos.z);
+            m(1, 1) = (3.0 / sphere->Mass()) * (pos.x * pos.x + pos.z * pos.z);
+            m(2, 2) = (3.0 / sphere->Mass()) * (pos.x * pos.x + pos.y * pos.y);
+
+            sphere->InverseBodyInertiaTensor(m);
+
+            simulation_.AddBody(sphere);
+            phy_spheres_.push_back(sphere);
+            
         }
         else {
         }
@@ -537,14 +581,31 @@ void Simulator::Start()
 void Simulator::start()
 {
     // TODO : Check config.xml
-    for (int i = 0; i < 10; i++) 
+    for (int i = 0; i < 300; i++) 
     {
-        process_input();
         compute();
         render();
         save(i);
         glfwSwapBuffers(window_);
+        simulate();
     }
+}
+
+void Simulator::simulate()
+{
+    simulation_.SimulateUnitTime(0.033);
+    // HACK
+    for (int i = 0; i < spheres_.size(); i++) {
+        spheres_[i].x = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).X();
+        spheres_[i].y = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).Y();
+        spheres_[i].z = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).Z();
+    }
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, spheres_ssbo_);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        spheres_.size() * sizeof(glm::vec4), &spheres_[0], GL_DYNAMIC_COPY);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void Simulator::process_input()

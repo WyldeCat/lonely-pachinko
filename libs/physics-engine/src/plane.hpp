@@ -11,32 +11,32 @@ namespace pmframework
         Vector3d point2;
         Vector3d point3;
     public:
-        Plane(void);
+        PHYSICSENGINE_API Plane(void);
 
-        void A(scalar aComponent);
-        scalar A(void);
+        PHYSICSENGINE_API void A(scalar aComponent);
+        PHYSICSENGINE_API scalar A(void);
 
-        void B(scalar bComponent);
-        scalar B(void);
+        PHYSICSENGINE_API void B(scalar bComponent);
+        PHYSICSENGINE_API scalar B(void);
 
-        void C(scalar cComponent);
-        scalar C(void);
+        PHYSICSENGINE_API void C(scalar cComponent);
+        PHYSICSENGINE_API scalar C(void);
 
-        void D(scalar dComponenet);
-        scalar D(void);
+        PHYSICSENGINE_API void D(scalar dComponenet);
+        PHYSICSENGINE_API scalar D(void);
 
-        void NormalVector(Vector3d normal);
-        Vector3d NormalVector(void);
+        PHYSICSENGINE_API void NormalVector(Vector3d normal);
+        PHYSICSENGINE_API Vector3d NormalVector(void);
 
-        void SetPlane(Vector3d p1, Vector3d p2, Vector3d p3);
+        PHYSICSENGINE_API void SetPlane(Vector3d p1, Vector3d p2, Vector3d p3);
 
-        scalar DistanceFromPoint(Vector3d point);
+        PHYSICSENGINE_API scalar DistanceFromPoint(Vector3d point);
 
-        bool SeperatingAxisTest(RigidBody *sphere, int config);
+        PHYSICSENGINE_API bool SeperatingAxisTest(RigidBody *sphere, int config);
 
-        scalar AreaOfTriangle(Vector3d point1, Vector3d point2, Vector3d point3);
+        PHYSICSENGINE_API scalar AreaOfTriangle(Vector3d point1, Vector3d point2, Vector3d point3);
 
-        bool CollisionInTriangle(Vector3d collisionPoint);
+        PHYSICSENGINE_API bool CollisionInTriangle(Vector3d collisionPoint);
     };
 
     inline Plane::Plane(void)
