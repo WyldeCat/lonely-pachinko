@@ -89,6 +89,8 @@ namespace pmframework
             RigidBody::configuration &Target = Balls[Counter]->aConfiguration[targetConfigurationIndex];
 
             Source.velocity *= frictionCoefficient; //apply friction 
+            //HACK
+            if (0.01 < abs(Source.velocity.Y()) && abs(Source.velocity.Y()) < 0.025) Source.velocity.Y(0.0f);
 
             Target.position = Source.position + DeltaTime * Source.velocity;
 
