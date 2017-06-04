@@ -9,6 +9,32 @@
 
 Simulator* Simulator::instance;
 
+void print_mat(glm::mat4 &x)
+{
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            std::cout << x[i][j] << ", ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+void print_vec(glm::vec3 &v)
+{
+    std::cout << v.x << " " << v.y << " " << v.z << std::endl;
+}
+
+void print_vec(glm::vec4 &v)
+{
+    std::cout << v.x << " " << v.y << " " << v.z << " " << v.w << std::endl;
+}
+
+void print_vec(glm::ivec4 &v)
+{
+    std::cout << v.x << " " << v.y << " " << v.z << " " << v.w << std::endl;
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     Simulator::KeyCallback(key, scancode, action, mods);
@@ -26,6 +52,7 @@ Camera::Camera(const glm::vec3 &pos, const glm::vec3 &target,
     , axis_vert_(axis_vert)
     , axis_horz_(axis_horz)
 {
+    view_up_ = glm::normalize(glm::cross(axis_horz_, target_ - pos_));
     calculate();
 }
 
@@ -36,7 +63,6 @@ void Camera::Update(const glm::vec3 &pos, const glm::vec3 &target, const glm::ve
     axis_horz_ = axis_horz;
 
     view_up_ = glm::normalize(glm::cross(axis_horz_, target_ - pos_));
-
     calculate();
 }
 
@@ -92,17 +118,6 @@ void Simulator::key_callback(int key, int scancode, int action, int mods)
 void Simulator::MouseMovCallback(double x, double y)
 {
     instance->mouse_mov_callback(x, y);
-}
-
-void print_mat(glm::mat4 &x)
-{
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            std::cout << x[i][j] << ", ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
 }
 
 void Simulator::mouse_mov_callback(double x, double y)
@@ -195,7 +210,7 @@ void Simulator::mouse_mov_callback(double x, double y)
 Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
     : width_(width)
     , height_(height)
-    , curr_camera_(pos, glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
+    , curr_camera_(pos, glm::vec3(0.5, 0, -0.5), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
 {
     window_ = NULL;
 
@@ -210,6 +225,7 @@ Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
         // TODO : error log
         exit(EXIT_FAILURE);
     }
+
     glfwMakeContextCurrent(window_);
     glfwSwapInterval(1);
 
@@ -274,57 +290,56 @@ void Simulator::load_shaders(const pugi::xml_node& shader_list)
     }
 
     shader_program_ = glCreateProgram();
-    compute_program_ = glCreateProgram();
+compute_program_ = glCreateProgram();
 
-    std::for_each(shaders.begin(), shaders.end(),
-        [&](std::unique_ptr<Shader>& ptr) {
-        if (ptr->shader_type_ == GL_VERTEX_SHADER ||
-            ptr->shader_type_ == GL_FRAGMENT_SHADER) {
-            glAttachShader(shader_program_, ptr->GetShader());
-        }
-        else {
-            glAttachShader(compute_program_, ptr->GetShader());
-        }
-    });
+std::for_each(shaders.begin(), shaders.end(),
+    [&](std::unique_ptr<Shader>& ptr) {
+    if (ptr->shader_type_ == GL_VERTEX_SHADER ||
+        ptr->shader_type_ == GL_FRAGMENT_SHADER) {
+        glAttachShader(shader_program_, ptr->GetShader());
+    }
+    else {
+        glAttachShader(compute_program_, ptr->GetShader());
+    }
+});
 
-    glLinkProgram(shader_program_);
-    glLinkProgram(compute_program_);
+glLinkProgram(shader_program_);
+glLinkProgram(compute_program_);
 
-    std::for_each(shaders.begin(), shaders.end(),
-        [&](std::unique_ptr<Shader>& ptr) {
-        if (ptr->shader_type_ == GL_VERTEX_SHADER ||
-            ptr->shader_type_ == GL_FRAGMENT_SHADER) {
-            glDetachShader(shader_program_, ptr->GetShader());
-        }
-        else {
-            glDetachShader(compute_program_, ptr->GetShader());
-        }
-    });
+std::for_each(shaders.begin(), shaders.end(),
+    [&](std::unique_ptr<Shader>& ptr) {
+    if (ptr->shader_type_ == GL_VERTEX_SHADER ||
+        ptr->shader_type_ == GL_FRAGMENT_SHADER) {
+        glDetachShader(shader_program_, ptr->GetShader());
+    }
+    else {
+        glDetachShader(compute_program_, ptr->GetShader());
+    }
+});
 
-    int infologLength = 1024, charsWritten;
-    char *infoLog = new char[infologLength];
-    glGetProgramInfoLog(compute_program_, infologLength, &charsWritten, infoLog);
-    std::cout << infoLog << std::endl;
+int infologLength = 1024, charsWritten;
+char *infoLog = new char[infologLength];
+glGetProgramInfoLog(compute_program_, infologLength, &charsWritten, infoLog);
+std::cout << infoLog << std::endl;
 
-    wld_uniform_ = glGetUniformLocationARB(shader_program_, "obj2wld");
-    view_uniform_ = glGetUniformLocationARB(shader_program_, "wld2cam");
-    proj_uniform_ = glGetUniformLocationARB(shader_program_, "projection");
+wld_uniform_ = glGetUniformLocationARB(shader_program_, "obj2wld");
+view_uniform_ = glGetUniformLocationARB(shader_program_, "wld2cam");
+proj_uniform_ = glGetUniformLocationARB(shader_program_, "projection");
 
-    num_vertices_uniform_ = glGetUniformLocationARB(compute_program_,
-        "num_vertices");
-    num_triangles_uniform_ = glGetUniformLocationARB(compute_program_,
-        "num_triangles");
-    num_spheres_uniform_ = glGetUniformLocationARB(compute_program_,
-        "num_spheres");
+num_vertices_uniform_ = glGetUniformLocationARB(compute_program_,
+    "num_vertices");
+num_triangles_uniform_ = glGetUniformLocationARB(compute_program_,
+    "num_triangles");
+num_spheres_uniform_ = glGetUniformLocationARB(compute_program_,
+    "num_spheres");
+num_nvectors_uniform_ = glGetUniformLocationARB(compute_program_,
+    "num_nvectors");
 
-    eye_uniform_ = glGetUniformLocationARB(compute_program_, "eye");
-
-    ray_uniform_[0][0] = glGetUniformLocationARB(compute_program_, "ray00");
-    ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
-    ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
-    ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
-
-    std::cout << num_vertices_uniform_ << std::endl;
+eye_uniform_ = glGetUniformLocationARB(compute_program_, "eye");
+ray_uniform_[0][0] = glGetUniformLocationARB(compute_program_, "ray00");
+ray_uniform_[0][1] = glGetUniformLocationARB(compute_program_, "ray01");
+ray_uniform_[1][0] = glGetUniformLocationARB(compute_program_, "ray10");
+ray_uniform_[1][1] = glGetUniformLocationARB(compute_program_, "ray11");
 }
 
 void Simulator::load_objects(const pugi::xml_node& obj_list)
@@ -332,31 +347,98 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
     for (auto object = obj_list.child("object"); object;
         object = object.next_sibling()) {
         if (!strcmp(object.attribute("type").value(), "mesh")) {
+            int material_idx =
+                std::stoi(object.child("material").first_child().value());
             objects_.push_back(
-                std::unique_ptr<Object>(new Mesh(object.child("file").first_child().value())
-                    ));
+                std::unique_ptr<Object>
+                (new Mesh(object.child("file").first_child().value(),
+                    object.child("texture").first_child().value(),
+                    material_idx))
+            );
+        }
+        else if (!strcmp(object.attribute("type").value(), "sphere")) {
+            std::stringstream pos_ss(object.child("pos").first_child().value());
+            GLfloat radius = std::stof(object.child("radius").first_child().value());
+            glm::vec3 pos;
+            pos_ss >> pos.x >> pos.y >> pos.z;
+            objects_.push_back(
+                std::unique_ptr<Object>(new Sphere(pos, radius))
+            );
         }
     }
 
+    int offset = 0;
+    int offset_n = 0;
+    int offset_t = 0;
+    textures_cnt_ = 0;
     for (auto& object : objects_)
     {
         auto mesh = dynamic_cast<Mesh*>(object.get());
+        auto sphere = dynamic_cast<Sphere*>(object.get());
         if (mesh) {
-            // TODO : It only supports vertex with normal
+            for (auto& vertex : mesh->GetVertices()) {
+                vertices__.push_back(vertex->pos_);
+            }
+
+            for (auto& tvertex : mesh->GetTextures()) {
+                tvertices_.push_back(*tvertex);
+            }
+
+            for (auto& nvector : mesh->GetNvectors()) {
+                nvectors_.push_back(*nvector);
+            }
+
             for (auto& face : mesh->GetFaces()) {
-                faces_.push_back(glm::ivec3());
+                faces_.push_back(glm::ivec4());
                 for (int i = 0; i < face->GetVertices().size(); i++) {
                     vertices_.push_back(face->GetVertex(i)->pos_);
                     vertices_.push_back(*(face->GetNormal(i)));
-                    faces_.back()[i] = face->GetVertexIdx(i);
+                    faces_.back()[i] = face->GetVertexIdx(i) + offset;
                 }
+                faces_.back()[3] = mesh->GetMaterialIdx();
+
+                faces_.push_back(glm::ivec4());
+                for (int i = 0; i < face->GetNormals().size(); i++) {
+                    faces_.back()[i] = face->GetNormalIdx(i) + offset_n;
+                }
+
+                faces_.push_back(glm::ivec4());
+                for (int i = 0; i < face->GetTextures().size(); i++) {
+                    faces_.back()[i] = face->GetTextureIdx(i) + offset_t;
+                }
+                faces_.back()[3] = textures_cnt_;
             }
+            offset = vertices__.size();
+            offset_n = nvectors_.size();
+            offset_t = tvertices_.size();
+            textures_[textures_cnt_++] = load_texture(mesh->GetTexture(),
+                mesh->GetTextureWidth(), mesh->GetTextureHeight());
+        }
+        else if (sphere) {
+            spheres_.push_back(glm::vec4(sphere->GetPos(),
+                sphere->GetRadius()));
         }
         else {
-            // TODO : Not implemented
-            std::cout << "not mesh!!" << std::endl;
         }
     }
+}
+
+GLuint Simulator::load_texture(unsigned char* buffer, int width, int height)
+{
+    /* TODO : Not implemented
+    GLuint texture_id;
+    glGenTextures(1, &texture_id);
+    
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, buffer);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindImageTexture(1, texture_id, 0, GL_FALSE, 0, GL_READ_ONLY, GL_BGR);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    */
+    return 0;
 }
 
 bool Simulator::initialize(const std::string& xml_url)
@@ -369,8 +451,9 @@ bool Simulator::initialize(const std::string& xml_url)
     auto object_list = simulator.child("object-list");
 
     int scale = simulator.attribute("scale").as_int();
+    scale_ = scale;
 
-    std::cout << "Scale : " << scale << std::endl;
+    std::cout << "Scale : " << scale_ << std::endl << std::endl;
 
     world_ = glm::mat4(0.0);
     world_[0][0] = world_[1][1] = world_[2][2] = 1.0 / scale;
@@ -378,7 +461,6 @@ bool Simulator::initialize(const std::string& xml_url)
 
     load_shaders(shader_list);
     load_objects(object_list);
-
     if (!check_program()) {
         // TODO : error log
         return false;
@@ -386,29 +468,63 @@ bool Simulator::initialize(const std::string& xml_url)
 
     // for compute shader
     glGenBuffers(1, &vertices_ssbo_);
+    glGenBuffers(1, &tvertices_ssbo_);
+    glGenBuffers(1, &nvectors_ssbo_);
     glGenBuffers(1, &triangles_ssbo_);
     glGenBuffers(1, &spheres_ssbo_);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertices_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-        vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_COPY);
+        vertices__.size() * sizeof(glm::vec3), &vertices__[0], GL_STATIC_COPY);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, tvertices_ssbo_);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        tvertices_.size() * sizeof(glm::vec2), &tvertices_[0], GL_STATIC_COPY);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, nvectors_ssbo_);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        nvectors_.size() * sizeof(glm::vec3), &nvectors_[0], GL_STATIC_COPY);
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangles_ssbo_);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-        faces_.size() * sizeof(glm::ivec3), &faces_[0], GL_STATIC_COPY);
+        faces_.size() * sizeof(glm::ivec4), &faces_[0], GL_STATIC_COPY);
+    
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, spheres_ssbo_);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        spheres_.size() * sizeof(glm::vec4), &spheres_[0], GL_DYNAMIC_COPY);
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
    
     glGenTextures(1, &texture_);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width_, height_, 0, GL_RGBA, GL_FLOAT, nullptr);
     glBindImageTexture(0, texture_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     glBindTexture(GL_TEXTURE_2D, 0);
-     
+    
 	glGenBuffers(1, &vertex_buffer_object_);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
 	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_DRAW);
+
+    buffer_for_save_ = new unsigned char[width_ * height_ * 3];
+    
+    file_header_.bfType = 0x4D42;
+    file_header_.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + (width_ * height_ * 3);
+    file_header_.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+    info_header_.biSize = sizeof(BITMAPINFOHEADER);
+    info_header_.biWidth = width_;
+    info_header_.biHeight = height_;
+    info_header_.biPlanes = 1;
+    info_header_.biBitCount = 24;
+    info_header_.biCompression = BI_RGB;
+    info_header_.biSizeImage = width_ * height_ * 3;
+    info_header_.biXPelsPerMeter = 0;
+    info_header_.biYPelsPerMeter = 0;
+    info_header_.biClrUsed = 0;
+    info_header_.biClrImportant = 0;
 
     return true;
 }
@@ -420,12 +536,14 @@ void Simulator::Start()
 
 void Simulator::start()
 {
-    while (!glfwWindowShouldClose(window_)) {
+    // TODO : Check config.xml
+    for (int i = 0; i < 10; i++) 
+    {
         process_input();
         compute();
         render();
+        save(i);
         glfwSwapBuffers(window_);
-        glfwPollEvents();
     }
 }
 
@@ -469,46 +587,49 @@ void Simulator::compute()
     glm::mat4 &t = curr_camera_.GetMatrix();
     glm::vec3 pos(t[0][3], t[1][3], t[2][3]);
     t[0][3] = t[1][3] = t[2][3] = 0;
-    glm::mat4 inv = glm::inverse(proj_ * 
-        glm::transpose(curr_camera_.GetMatrix()) * world_);
+
+    glm::mat4 prev_inv = proj_ * glm::transpose(curr_camera_.GetMatrix()) * world_;
+    glm::mat4 inv = glm::inverse(prev_inv);
     glm::vec4 tmp;
 
     glUseProgram(compute_program_);
     
     // invoke compute shader
     
-    glUniform3f(eye_uniform_, curr_camera_.pos_.x,
-        curr_camera_.pos_.y, curr_camera_.pos_.z);
+    glUniform3f(eye_uniform_, curr_camera_.pos_.x * scale_,
+        curr_camera_.pos_.y * scale_, curr_camera_.pos_.z * scale_);
 
-    tmp = glm::normalize(inv * glm::vec4(-1, -1, 0, 1) -
-        proj_ * glm::vec4(curr_camera_.pos_, 0.0));
+    tmp = glm::normalize(inv * glm::vec4(-1, -1, 0, 1));
     glUniform3f(ray_uniform_[0][0], tmp.x, tmp.y, tmp.z);
-
-    tmp = glm::normalize(inv * glm::vec4(1, -1, 0, 1) -
-        glm::vec4(curr_camera_.pos_, 0.0));
+    
+    tmp = glm::normalize(inv * glm::vec4(1, -1, 0, 1));
     glUniform3f(ray_uniform_[1][0], tmp.x, tmp.y, tmp.z);
-
-    tmp = glm::normalize(inv * glm::vec4(-1, 1, 0, 1) -
-        glm::vec4(curr_camera_.pos_, 0.0));
+    
+    tmp = glm::normalize(inv * glm::vec4(-1, 1, 0, 1));
     glUniform3f(ray_uniform_[0][1], tmp.x, tmp.y, tmp.z);
-
-    tmp = glm::normalize(inv * glm::vec4(1, 1, 0, 1) -
-        glm::vec4(curr_camera_.pos_, 0.0));
+    
+    tmp = glm::normalize(inv * glm::vec4(1, 1, 0, 1));
     glUniform3f(ray_uniform_[1][1], tmp.x, tmp.y, tmp.z);
     
-    glUniform1i(num_vertices_uniform_, vertices_.size() / 2);
-    glUniform1i(num_triangles_uniform_, faces_.size());
-    glUniform1i(num_spheres_uniform_, 0);
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertices_ssbo_);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, triangles_ssbo_);
+    glUniform1i(num_vertices_uniform_, vertices__.size());
+    glUniform1i(num_nvectors_uniform_, nvectors_.size());
+    glUniform1i(num_triangles_uniform_, faces_.size()/3);
+    glUniform1i(num_spheres_uniform_, spheres_.size());
+    
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, vertices_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, nvectors_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 13, tvertices_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 14, triangles_ssbo_);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 15, spheres_ssbo_);
 
     glDispatchCompute(width_, height_, 1);
-    
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
 
-    // compute ray
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 15, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 14, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 13, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, 0);
+
     glUseProgram(0);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -543,9 +664,17 @@ void Simulator::render()
     glUseProgram(0);
 }
 
-void Simulator::pause()
+void Simulator::save(int idx)
 {
-    // TODO : Not implemented
+    std::string file_name = "result" + std::to_string(idx) + ".bmp";
+    FILE *file = fopen(file_name.data(), "w");
+    glReadPixels(0, 0, width_, height_, GL_RGB, GL_UNSIGNED_BYTE, buffer_for_save_);
+
+    fwrite(&file_header_, 1, sizeof(BITMAPFILEHEADER), file);
+    fwrite(&info_header_, 1, sizeof(BITMAPINFOHEADER), file);
+    fwrite(buffer_for_save_, 1, width_ * height_ * 3, file);
+    
+    fclose(file);
 }
 
 bool Simulator::check_program()

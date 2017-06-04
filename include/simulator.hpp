@@ -27,6 +27,8 @@
 #include "object.hpp"
 #include "shader.hpp"
 
+#include <Windows.h>
+
 class Simulator;
 
 class Camera {
@@ -37,6 +39,7 @@ public:
     glm::mat4& GetMatrix();
     void Update(const glm::vec3 &pos, const glm::vec3 &target,
         const glm::vec3 &axis_horz);
+    void Update() { calculate();  }
 
 private:
     void calculate();
@@ -77,13 +80,14 @@ private:
    
     void load_shaders(const pugi::xml_node& shader_list);
     void load_objects(const pugi::xml_node& obj_list);
+    GLuint load_texture(unsigned char* buffer, int width, int height);
 
     void process_input();
     bool check_program();
     
     void compute();
     void render();
-    void pause();
+    void save(int idx);
 
     GLFWwindow* window_;
     
@@ -100,14 +104,20 @@ private:
     GLint eye_uniform_;
 
     GLint num_vertices_uniform_;
+    GLint num_nvectors_uniform_;
     GLint num_triangles_uniform_;
     GLint num_spheres_uniform_;
 
     GLuint vertices_ssbo_;
+    GLuint tvertices_ssbo_;
+    GLuint nvectors_ssbo_;
     GLuint triangles_ssbo_;
     GLuint spheres_ssbo_;
 
     GLuint texture_;
+    GLuint textures_[10];
+    GLuint textures_cnt_;
+    
     GLuint vertex_buffer_object_;
 
     glm::mat4 world_;
@@ -127,12 +137,23 @@ private:
 
     int width_;
     int height_;
+    int scale_;
 
     short key_stat[300]; // GL_PRESS, GL_REPEAT, GL_RELEASE
+
+    unsigned char* buffer_for_save_;
+
+    BITMAPFILEHEADER file_header_;
+    BITMAPINFOHEADER info_header_;
+
     bool first_touch;
 
     std::vector<glm::vec3> vertices_; // static vertex
-    std::vector<glm::ivec3> faces_;
+    std::vector<glm::vec2> tvertices_;
+    std::vector<glm::vec3> nvectors_;
+    std::vector<glm::ivec4> faces_;
+    std::vector<glm::vec3> vertices__;
+    std::vector<glm::vec4> spheres_;
 };
 
 #endif

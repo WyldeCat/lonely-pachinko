@@ -18,15 +18,17 @@
 class Object {
 // interface class
 public:
-    virtual void Draw() = 0;
     virtual ~Object() = default;
 };
 
-class Sphere : public Object /* */ {
+class Sphere : public Object {
 public:
-    virtual void Draw();
+    Sphere(const glm::vec3& pos, float radius);
+    float GetRadius() { return radius_; }
+    const glm::vec3& GetPos() { return pos_; }
 private:
     float radius_;
+    glm::vec3 pos_;
 };
 
 class Vertex {
@@ -59,22 +61,19 @@ public:
     int v_, t_, n_;
 };
 
-
-
-
 class Mesh : public Object {
 public:
     class Face : public Object {
     public:
         Face(std::vector<Token>& tokens, Mesh& mesh);
 
-        virtual void Draw();
-
         const std::vector<int>& GetVertices() { return vertices_; }
         const std::vector<int>& GetNormals() { return normals_; }
         const std::vector<int>& GetTextures() { return textures_; }
 
         int GetVertexIdx(int idx) { return vertices_[idx]; }
+        int GetNormalIdx(int idx) { return normals_[idx]; }
+        int GetTextureIdx(int idx) { return textures_[idx]; }
         
         std::shared_ptr<Vertex> GetVertex(int idx)
         {
@@ -97,12 +96,39 @@ public:
         std::vector<int> textures_;
     };
 
-    virtual void Draw();
-    Mesh(const std::string& obj_file);
+    Mesh(const std::string& obj_file, const std::string& texture_file,
+        int material_idx);
 
     const std::vector<std::unique_ptr<Face>>& GetFaces() { return faces_; }
+    const std::vector<std::shared_ptr<Vertex>>& GetVertices()
+    {
+        return vertices_; 
+    }
+    
+    const std::vector<std::shared_ptr<glm::vec3>>& GetNvectors()
+    {
+        return normals_;
+    }
+
+    const std::vector<std::shared_ptr<glm::vec2>>& GetTextures()
+    {
+        return textures_;
+    }
+
+    int GetMaterialIdx() { return material_idx_; }
+
+    unsigned char* GetTexture() { return texture_; }
+    int GetTextureWidth() { return width_; }
+    int GetTextureHeight() { return height_; }
 
 private:
+    void load_texture(const std::string& texture_file);
+    int material_idx_;
+    
+    unsigned char* texture_;
+    int width_;
+    int height_;
+
     std::vector<std::unique_ptr<Face>> faces_;
     std::vector<std::shared_ptr<Vertex>> vertices_;
 

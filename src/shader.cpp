@@ -13,7 +13,7 @@ Shader::Shader(GLenum shader_type, const std::string& source_url)
     glShaderSource(shader_, 1, &source_ptr, NULL);
     glCompileShader(shader_);
 
-    if (!check_shader()) {
+    if (!check_shader()) {  
         glDeleteShader(shader_);
         shader_ = -1;
     }
@@ -29,7 +29,6 @@ GLuint Shader::GetShader()
     return shader_;
 }
 
-#include <iostream>
 bool Shader::check_shader()
 {
 	// TODO : Not implemented
