@@ -7,6 +7,7 @@ namespace pmframework
     {
     private:
         Matrix3x3 inverseBodyInertiaTensor;
+        scalar frictionCoefficient;
 
         struct configuration : public PointMass::configuration {
             Vector3d angularMomentum;
@@ -34,6 +35,8 @@ namespace pmframework
 
         PHYSICSENGINE_API virtual void InverseBodyInertiaTensor(Matrix3x3 inverseInertiaValue);
         PHYSICSENGINE_API virtual Matrix3x3 InverseBodyInertiaTensor(void);
+
+        PHYSICSENGINE_API virtual void FrictionCoefficient(scalar coefficient);
 
         PHYSICSENGINE_API virtual void AngularMomentum(Vector3d angularMomentumValue);
         PHYSICSENGINE_API virtual Vector3d AngularMomentum(int configurationIndex);
@@ -98,6 +101,8 @@ namespace pmframework
     {
         return inverseBodyInertiaTensor;
     }
+
+    inline void RigidBody::FrictionCoefficient(scalar coefficient);
 
     inline void RigidBody::AngularMomentum(Vector3d angularMomentumValue)
     {
