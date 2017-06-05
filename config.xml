@@ -14,12 +14,12 @@
     </object>
     
     <object type="sphere">
-      <pos>8.0 -13 0.0</pos>
+      <pos>8.0 -17 -39.6</pos>
       <radius>1.0</radius>
     </object>
 
     <object type="sphere">
-      <pos>-5.0 -13 3.0</pos>
+      <pos>-5.0 -17 -39.6</pos>
       <radius>1.0</radius>
     </object>
   </object-list>

@@ -225,7 +225,7 @@ bool intersect_objects(vec3 origin, vec3 dir, out hitinfo info)
     for (i = 0; i < num_spheres; i++) {
         if (intersect_sphere(origin, dir, spheres_[i], p, normal)) {
             float dist = distance(origin, p);
-            if (dist > 0.1 && min_dist > dist) 
+            if (dist > 0.01 && min_dist > dist) 
             {
                 min_dist = dist;
                 info.point = p;
@@ -308,7 +308,6 @@ vec4 trace(vec3 origin, vec3 dir)
                 dott(light1.diffuse, materials[info.material_idx].diffuse);
         }
         else {
-        
             vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
             result += dott(light1.ambient, materials[2].ambient);
             info.point += dir * 0.001;

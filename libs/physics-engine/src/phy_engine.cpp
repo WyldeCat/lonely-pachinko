@@ -2,7 +2,7 @@
 
 namespace pmframework
 {
-    Vector3d gravity(0, -9.8f, 0);
+    Vector3d gravity(0, -8.8f, 0);
     scalar frictionCoefficient = 0.98;
 
     Simulation::Simulation()
@@ -90,7 +90,10 @@ namespace pmframework
 
             Source.velocity *= frictionCoefficient; //apply friction 
             //HACK
-            if (0.01 < abs(Source.velocity.Y()) && abs(Source.velocity.Y()) < 0.025) Source.velocity.Y(0.0f);
+            if (0 < (Source.velocity.Y()) && (Source.velocity.Y()) < 0.03) {
+                Source.velocity.Y(0.000001f);
+                Source.sumForce.Y(0.0f);
+            }
 
             Target.position = Source.position + DeltaTime * Source.velocity;
 
@@ -225,6 +228,9 @@ namespace pmframework
         Vector3d Impulse = (ImpulseNumerator / ImpulseDenominator) * collisionNormal;
 
         Configuration.velocity += ((1.0f) / ball->mass) * Impulse;
+        if (0 < (Configuration.velocity.Y() && (Configuration.velocity.Y())) < 0.03f) {
+            Configuration.velocity.Y(0.000001f);
+        }
         Configuration.angularMomentum += R.crossProduct(Impulse);
 
         Configuration.angularVelocity = Configuration.inverseWorldInertiaTensor * Configuration.angularMomentum;

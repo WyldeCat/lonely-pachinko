@@ -210,7 +210,7 @@ void Simulator::mouse_mov_callback(double x, double y)
 Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
     : width_(width)
     , height_(height)
-    , curr_camera_(pos, glm::vec3(0.0, -0.1, -0.5), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
+    , curr_camera_(pos, glm::vec3(-0.2, -0.1, -1.0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
 {
     window_ = NULL;
 
@@ -448,7 +448,7 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
             sphere->Mass(10);
             sphere->Position(pmframework::Vector3d(pos.x, pos.y, pos.z));
             sphere->Restitution(0.8);
-            sphere->Velocity(pmframework::Vector3d(0, 0, 0));
+            sphere->Velocity(pmframework::Vector3d(0, 0, -10));
             sphere->RotationalInertia(pmframework::Vector3d(1, 2, 3));
 
             pmframework::Matrix3x3 m;
@@ -593,12 +593,14 @@ void Simulator::start()
 
 void Simulator::simulate()
 {
-    simulation_.SimulateUnitTime(0.033);
+    simulation_.SimulateUnitTime(0.02);
     // HACK
     for (int i = 0; i < spheres_.size(); i++) {
         spheres_[i].x = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).X();
         spheres_[i].y = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).Y();
         spheres_[i].z = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).Z();
+        std::cout << i << " : ";
+        print_vec(spheres_[i]);
     }
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, spheres_ssbo_);
