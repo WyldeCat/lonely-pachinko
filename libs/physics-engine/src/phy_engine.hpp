@@ -22,12 +22,12 @@ namespace pmframework
         PHYSICSENGINE_API void AddPlane(Plane *plane);
 
     private:
-        enum collision_state
+        /*enum collision_state
         {
             Penetrating,
             Colliding,
             Clear
-        } collisionState;
+        } collisionState;*/
 
         enum collision_type
         {
@@ -50,7 +50,7 @@ namespace pmframework
 
         void ComputeForces(int configurationIndex);
         void Integrate(scalar DeltaTime);
-        collision_state CheckForCollisions(int configurationIndex);
+        RigidBody::collision_state CheckForCollisions(int configurationIndex);
         void ResolveSpherePlaneCollisions(Vector3d collisionPoint, int configurationIndex);
         void ResolveSphereSphereCollisions(int configurationIndex);
 

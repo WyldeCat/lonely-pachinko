@@ -6,6 +6,13 @@ namespace pmframework
     class RigidBody : public PointMass
     {
     private:
+        enum collision_state
+        {
+            Penetrating,
+            Colliding,
+            Clear
+        } collisionState;
+
         Matrix3x3 inverseBodyInertiaTensor;
 
         struct configuration : public PointMass::configuration {
@@ -22,6 +29,9 @@ namespace pmframework
 
     public:
         PHYSICSENGINE_API RigidBody(void);
+
+        PHYSICSENGINE_API void CollisionState(collision_state state);
+        PHYSICSENGINE_API collision_state CollisionState(void);
 
         PHYSICSENGINE_API void Position(Vector3d positionCenterOfMass);
         PHYSICSENGINE_API Vector3d Position(int configurationIndex);
@@ -57,6 +67,15 @@ namespace pmframework
     inline RigidBody::RigidBody(void)
     {
 
+    }
+
+    inline void RigidBody::CollisionState(collision_state state)
+    {
+        collisionState = state;
+    }
+    inline RigidBody::collision_state RigidBody::CollisionState(void)
+    {
+        return collisionState;
     }
 
     inline void RigidBody::Position(Vector3d positionCenterOfMass)

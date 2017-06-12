@@ -1,35 +1,46 @@
-<simulator scale = "60">
-  <object-list>
 
+<simulator frames = "400">
+
+  <camera-pos>0 -15 -5</camera-pos>
+  <camera-target>10 -15 -1</camera-target>
+  
+  <object-list>
     <object type="mesh">
       <file>models/room.obj</file>
       <texture>models/floor.bmp</texture>
       <material>1</material>
     </object>
 
+    <object type="sphere">
+      <pos>9 -13.5 -2.5</pos>
+      <radius>0.5</radius>
+      <velocity>0 -2 0</velocity>
+      <mass>1</mass>
+    </object>
+    
     <object type="mesh">
       <file>models/chair.obj</file>
       <texture>models/floor.bmp</texture>
-      <material>1</material>
+      <material>0</material>
     </object>
     
-    <object type="sphere">
-      <pos>8.0 -17 -39.6</pos>
-      <radius>1.0</radius>
+    <object type="mesh">
+      <file>models/floor.obj</file>
+      <texture>models/floor.bmp</texture>
+      <material>3</material>
     </object>
-
+    <!--
     <object type="sphere">
-      <pos>-5.0 -17 -39.6</pos>
-      <radius>1.0</radius>
+      <pos>9 -17.5 -2.50</pos>
+      <radius>0.5</radius>
+      <velocity>0 0 0</velocity>
+      <mass>1</mass>
     </object>
-  </object-list>
-  
-  <shader-list>
+  -->
+</object-list>  
+    <shader-list>
     <shader type="vert">shaders/basic_shader.glvs</shader>
     <shader type="frag">shaders/basic_shader.glfs</shader>
     <shader type="compute">shaders/compute_shader.glcs</shader>
   </shader-list>
-  
 </simulator>
-
-

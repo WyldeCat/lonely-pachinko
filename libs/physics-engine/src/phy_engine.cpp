@@ -1,13 +1,12 @@
 #include "pmframework.hpp"
-
+/*Fix start!*/
 namespace pmframework
 {
-    Vector3d gravity(0, -8.8f, 0);
+    Vector3d gravity(0, -9.8f, 0);
     scalar frictionCoefficient = 0.98;
 
     Simulation::Simulation()
     {
-        collisionState = Clear;
         collisionType = None;
         sourceConfigurationIndex = 0;
         targetConfigurationIndex = 1;
@@ -37,10 +36,11 @@ namespace pmframework
 
             Integrate(targetTime - currentTime);
 
-            CheckForCollisions(targetConfigurationIndex);
+            //CheckForCollisions(targetConfigurationIndex);
 
-            if (collisionState == Penetrating)
+            if (CheckForCollisions(targetConfigurationIndex) == RigidBody::Penetrating)
             {
+                printf("!");
                 targetTime = (currentTime + targetTime) / 2.0;
 
                 //assert(fabs(targetTime - currentTime) > SCALAR_TOLERANCE);
@@ -88,18 +88,18 @@ namespace pmframework
             RigidBody::configuration &Source = Balls[Counter]->aConfiguration[sourceConfigurationIndex];
             RigidBody::configuration &Target = Balls[Counter]->aConfiguration[targetConfigurationIndex];
 
-            Source.velocity *= frictionCoefficient; //apply friction 
             //HACK
-            if (0 < (Source.velocity.Y()) && (Source.velocity.Y()) < 0.03) {
-                Source.velocity.Y(0.000001f);
-                Source.sumForce.Y(0.0f);
-            }
+            if (Balls[Counter]->collisionState != RigidBody::Clear) Source.velocity *= frictionCoefficient;
 
             Target.position = Source.position + DeltaTime * Source.velocity;
 
             Target.orientation = Source.orientation + DeltaTime * Matrix3x3(Source.angularVelocity, Matrix3x3::SkewSymmetric) * Source.orientation;
 
             Target.velocity = Source.velocity + (DeltaTime / Balls[Counter]->mass) * Source.sumForce;
+
+            if ((Source.velocity.Y() < 0.0000011f || Source.velocity.Y() < 0) && 0.000001f < Target.velocity.Y() && Target.velocity.Y() < 0.8f) {
+                Target.velocity.Y(0.0000011f);
+            }
 
             Target.angularMomentum = Source.angularMomentum + DeltaTime * Source.torque;
 
@@ -113,27 +113,32 @@ namespace pmframework
 
 
 
-    Simulation::collision_state Simulation::CheckForCollisions(int ConfigurationIndex)
+    RigidBody::collision_state Simulation::CheckForCollisions(int ConfigurationIndex)
     {
-        collisionState = Clear;
+
         float const DepthEpsilon = 0.01f;
 
-        for (int i = 0; (i < Balls.size()) && (collisionState != Penetrating); ++i) {
+        for (int i = 0; i < Balls.size(); ++i) {
             RigidBody *Body1 = Balls[i];
             RigidBody::configuration &Configuration1 = Body1->aConfiguration[ConfigurationIndex];
-            for (int j = i + 1; j < Balls.size() && (collisionState != Penetrating); ++j) {
+            Body1->collisionState = RigidBody::Clear;
+
+            for (int j = i + 1; j < Balls.size(); ++j) {
                 RigidBody *Body2 = Balls[j];
                 RigidBody::configuration &Configuration2 = Body2->aConfiguration[ConfigurationIndex];
+                Body2->collisionState = RigidBody::Clear;
 
                 Vector3d distanceVector = Configuration1.position - Configuration2.position;
                 scalar distance = distanceVector.norm() - Body1->boundingSphereRadius - Body2->boundingSphereRadius;
-
                 if (distance < -DepthEpsilon) {
-                    collisionState = Penetrating;
+                    Body1->collisionState = RigidBody::Penetrating;
+                    Body2->collisionState = RigidBody::Penetrating;
+                    return RigidBody::Penetrating;
                 }
                 else {
                     if (distance < DepthEpsilon) {
-                        collisionState = Colliding;
+                        Body1->collisionState = RigidBody::Colliding;
+                        Body2->collisionState = RigidBody::Colliding;
                         collisionType = SphereSphere;
                         collisionNormal = (Configuration1.position - Configuration2.position).normalize(SCALAR_TOLERANCE);
                         collisionBodyIndex1 = i;
@@ -145,17 +150,19 @@ namespace pmframework
                 }
             }
 
-            for (int WallIndex = 0; (WallIndex < Walls.size()) && (collisionState != Penetrating); WallIndex++) {
+            for (int WallIndex = 0; WallIndex < Walls.size(); WallIndex++) {
 
                 Plane *wall = Walls[WallIndex];
 
                 scalar distance = wall->DistanceFromPoint(Configuration1.position) - Body1->BoundingSphereRadius();
 
-                bool colliding = (!(wall->SeperatingAxisTest(Body1, ConfigurationIndex)));
+                bool colliding;
 
                 if (distance < -DepthEpsilon) {
+                    colliding = (!(wall->SeperatingAxisTest(Body1, ConfigurationIndex)));
                     if (colliding) {
-                        collisionState = Penetrating;
+                        Body1->collisionState = RigidBody::Penetrating;
+                        return RigidBody::Penetrating;
                     }
                     else {
                         //a sphere collides with the expanded trangle
@@ -163,11 +170,19 @@ namespace pmframework
                 }
                 else {
                     if (distance < DepthEpsilon) {
+                        Vector3d vv = -(distance + 0.01) * wall->NormalVector();
+
+
+                        Configuration1.position += vv;
+                        scalar arar = wall->DistanceFromPoint(Configuration1.position) - Body1->BoundingSphereRadius();
+                        colliding = (!(wall->SeperatingAxisTest(Body1, ConfigurationIndex)));
+
+                        Configuration1.position -= vv;
                         if (colliding) {
                             Vector3d center = Configuration1.position;
                             scalar t = -(wall->NormalVector().dotProduct(Configuration1.position) + wall->D()) / wall->NormalVector().normSquared();
                             collisionPoint = Vector3d(wall->A()*t + center.X(), wall->B()*t + center.Y(), wall->C()*t + center.Z());
-                            collisionState = Colliding;
+                            Body1->collisionState = RigidBody::Colliding;
                             collisionType = SpherePlane;
                             collisionNormal = wall->NormalVector();
                             collisionBodyIndex1 = i;
@@ -184,7 +199,7 @@ namespace pmframework
 
             }
         }
-        return collisionState;
+        if (collisionType != None) return RigidBody::Colliding;
     }
 
     void Simulation::ResolveSphereSphereCollisions(int configurationIndex)
@@ -228,14 +243,14 @@ namespace pmframework
         Vector3d Impulse = (ImpulseNumerator / ImpulseDenominator) * collisionNormal;
 
         Configuration.velocity += ((1.0f) / ball->mass) * Impulse;
-        if (0 < (Configuration.velocity.Y() && (Configuration.velocity.Y())) < 0.03f) {
-            Configuration.velocity.Y(0.000001f);
+
+        //HACK
+        scalar prevVelocity = ball->aConfiguration[sourceConfigurationIndex].velocity.Y();
+        if ((prevVelocity < 0.0000011f || prevVelocity<0) && 0.000001f < Configuration.velocity.Y() && Configuration.velocity.Y() < 0.8f) {
+            Configuration.velocity.Y(0.0000011f);
         }
+
         Configuration.angularMomentum += R.crossProduct(Impulse);
-
         Configuration.angularVelocity = Configuration.inverseWorldInertiaTensor * Configuration.angularMomentum;
-
     }
-
-
 }

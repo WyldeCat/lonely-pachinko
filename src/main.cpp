@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[])
 {
-    Simulator::Init(1024, 1024, glm::vec3(0.5, -0.1, 0.5), "lonely_pachinko");
+    Simulator::Init(1024, 1024, "lonely_pachinko", 60);
     
     if (Simulator::Initialize("config.xml")) {
         Simulator::Start();

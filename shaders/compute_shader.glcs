@@ -298,9 +298,13 @@ vec4 trace(vec3 origin, vec3 dir)
             result += dott(light1.ambient,materials[info.material_idx].ambient);
             info.point -= dir * 0.0001;
             intersect_objects(info.point, to_light, info2);
-            if (info2.dist >= distance(info.point, vec3(0, 8, 0))) {  
+            if (info2.dist >= distance(info.point, vec3(0, 8, 0))) 
+            {
+                vec3 reflect = normalize(-to_light - 2*dot(info.normal,-to_light)*info.normal);
                 result += max(dot(info.normal, to_light), 0)
                     * dott(light1.diffuse, materials[info.material_idx].diffuse);
+                result += pow(max(dot(-dir, reflect), 0), 89)
+                    * dott(light1.specular, materials[info.material_idx].specular);
             }
             result += max(dot(info.normal, vec3(-1,0,0))*0.3, 0) *
                 dott(light1.diffuse, materials[info.material_idx].diffuse);
@@ -309,27 +313,24 @@ vec4 trace(vec3 origin, vec3 dir)
         }
         else {
             vec3 to_light = normalize(vec3(0, 8, 0) - info.point);
-            result += dott(light1.ambient, materials[2].ambient);
+            //result += dott(light1.ambient, materials[2].ambient);
             info.point += dir * 0.001;
 
             vec3 reflect_trace = normalize(dir - 2*dot(info.normal, dir) * info.normal);
             vec4 reflect_result = reflect_trace_(info.point, reflect_trace);
-            result += dott(reflect_result, materials[2].ambient);
-
+            
             intersect_objects(info.point, to_light, info2);
 
-            if (info2.dist >= distance(info.point, vec3(0, 8, 0)))
-            {
-                vec3 reflect = normalize(-to_light - 2*dot(info.normal,-to_light)*info.normal);
+            if (info2.dist >= distance(info.point, vec3(0, 8, 0))) {
+                vec3 reflect = normalize(-to_light - 2 * dot(info.normal,-to_light)*info.normal);
                 result += dot(info.normal, to_light)
-                    * dott(light1.diffuse, materials[2].diffuse);
-                result += pow(max(dot(-dir, reflect), 0), 89)
-                    * dott(light1.specular, materials[2].specular);
-                //result += dott(reflect_result, dot(info.normal, to_light) * materials[2].diffuse);
-            } 
-            else 
-            {
-                
+                    * dott(light1.diffuse, dott(materials[2].diffuse, reflect_result));
+                result += pow(max(dot(-dir, reflect), 0), 80)
+                    * dott(light1.specular, materials[2].specular + reflect_result);
+                result += min(1, max(dot(info.normal, to_light) + 1, 0)) * reflect_result;
+            }
+            else {
+                result += min(1, max(dot(info.normal, to_light) + 1, 0)) * reflect_result;
             }
         }
     }
@@ -344,15 +345,18 @@ void main()
     light1.diffuse = vec4(1, 1, 1, 1);
     light1.specular = vec4(1, 1, 1, 1);
 
-    materials[0].ambient = vec4(0.1, 0.0, 0.0, 1.0);
-    materials[0].diffuse = vec4(0.5, 0.0, 0.0, 1.0);
-    materials[1].ambient = vec4(0.3, 0.3, 0.3, 1.0);
-    materials[1].diffuse = vec4(0.3, 0.3, 0.3, 1.0);
-    materials[2].ambient = vec4(0.10, 0.10, 0.10, 1.0);
+    materials[0].ambient = vec4(0.2, 0.3, 0.3, 1.0);
+    materials[0].diffuse = vec4(0.2, 0.3, 0.3, 1.0);
+
+    materials[1].ambient = vec4(0.2, 0.2, 0.2, 1.0);
+    materials[1].diffuse = vec4(0.2, 0.2, 0.2, 1.0);
+    
+    materials[2].ambient = vec4(0.20, 0.20, 0.20, 1.0);
     materials[2].specular = vec4(0.77, 0.77, 0.77, 1.0);
-    materials[2].diffuse = vec4(0.28, 0.28, 0.28, 1.0);
-    materials[3].diffuse = vec4(0, 0, 0, 0);
-    materials[3].ambient = vec4(0, 0, 0, 0);
+    materials[2].diffuse = vec4(0.44, 0.44, 0.44, 1.0);
+
+    materials[3].diffuse = vec4(0.17, 0.17, 0.17, 1);
+    materials[3].ambient = vec4(0.17, 0.17, 0.17, 1);
 
     // get index in global work group i.e x,y position
     ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);

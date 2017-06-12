@@ -23,12 +23,18 @@ public:
 
 class Sphere : public Object {
 public:
-    Sphere(const glm::vec3& pos, float radius);
+    Sphere(const glm::vec3& pos, float radius, const glm::vec3& velocity,
+        int mass);
     float GetRadius() { return radius_; }
     const glm::vec3& GetPos() { return pos_; }
+    const glm::vec3& GetVelocity() { return velocity_; }
+    const int GetMass() { return mass_; }
+
 private:
     float radius_;
+    int mass_;
     glm::vec3 pos_;
+    glm::vec3 velocity_;
 };
 
 class Vertex {

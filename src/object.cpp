@@ -4,9 +4,12 @@
 
 #include "object.hpp"
 
-Sphere::Sphere(const glm::vec3& pos, float radius)
+Sphere::Sphere(const glm::vec3& pos, float radius, const glm::vec3& velocity,
+    int mass)
     : radius_(radius)
     , pos_(pos)
+    , velocity_(velocity)
+    , mass_(mass)
 {
 }
 
@@ -29,6 +32,7 @@ Mesh::Mesh(const std::string& obj_file, const std::string& texture_file,
     int material_idx)
     : material_idx_(material_idx)
 {
+
     std::fstream obj(obj_file);
     if (obj.is_open()) {
         for (std::string line; std::getline(obj, line);) {

@@ -27,7 +27,6 @@ namespace pmframework
         return distance;
     }
 
-
     bool Plane::SeperatingAxisTest(RigidBody* sphere, int config) // 7-separate check
     {
         Vector3d A = point1 - sphere->Position(config);

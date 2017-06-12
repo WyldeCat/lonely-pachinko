@@ -5,6 +5,8 @@
 #ifndef _SIMULATOR_HPP_
 #define _SIMULATOR_HPP_
 
+#define FRAME_INTERVAL 0.02
+
 #include "../libs/physics-engine/src/phy_engine.hpp"
 
 /* pugi xml */
@@ -21,6 +23,8 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include <fstream>
+#include <thread>
 #include <iostream>
 
 /* custom class */
@@ -64,7 +68,7 @@ public:
     Simulator() {}
     ~Simulator() {}
 
-    static void Init(int width, int height, glm::vec3 pos, const char* title);
+    static void Init(int width, int height, const char* title, int scale);
                         
     static void Start();
     static bool Initialize(const std::string& xml_url);
@@ -74,7 +78,7 @@ public:
 
 private:
     static Simulator* instance;
-    Simulator(int w, int h, glm::vec3 pos, const char* title);
+    Simulator(int w, int h, const char* title, int scale);
 
     void start();
     bool initialize(const std::string& xml_url);
@@ -143,10 +147,11 @@ private:
     int width_;
     int height_;
     int scale_;
+    int num_frames_;
 
     short key_stat[300]; // GL_PRESS, GL_REPEAT, GL_RELEASE
 
-    unsigned char* buffer_for_save_;
+    unsigned char buffer_for_save_[1024*1024*3 + 1];
 
     BITMAPFILEHEADER file_header_;
     BITMAPINFOHEADER info_header_;
