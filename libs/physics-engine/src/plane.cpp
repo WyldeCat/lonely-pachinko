@@ -27,7 +27,6 @@ namespace pmframework
         return distance;
     }
 
-<<<<<<< HEAD
     /*구와 삼각형간의 sphere-triangle separate axis test입니다.
     구와 평면(무한한)의 충돌검사는 쉬웠는데 모든 mesh가 삼각형이다보니 충돌검출에서 어려움이 있었습니다.
     그러던 중 어느 글에서 SAT를 통해 구와 삼각형의 충돌검사를 하는 것을 보고 프로젝트를 하며 SAT는 볼록 다각형간의
@@ -45,9 +44,6 @@ namespace pmframework
 
     */
     bool Plane::SeperatingAxisTest(RigidBody* sphere, int config)
-=======
-    bool Plane::SeperatingAxisTest(RigidBody* sphere, int config) // 7-separate check
->>>>>>> origin/master
     {
         Vector3d A = point1 - sphere->Position(config);
         Vector3d B = point2 - sphere->Position(config);
@@ -95,7 +91,7 @@ namespace pmframework
         return separated;
     }
 
-    /*아래가 원래 삼각형과 구의 충돌을 구하려고 직접 짰던 함수입니다.
+    /*아래가 원래 삼각형과 구의 충돌을 구하려고 했던 함수입니다.
     일반적인 충돌검사는 가능하였지만 까다로운 케이스에서는 제대로 검출하지 못하여 결국 SAT방법을 사용했습니다
     아이디어는 삼각형과 확장시킨 삼각형(평면)과의 충돌점을 구해서 충돌점이 삼각형의 안에 있다면(넓이를 통해서 계산)
     충돌이고 그렇지 않으면 충돌하지 않은것입니다.
@@ -103,12 +99,11 @@ namespace pmframework
     구와 평면사이의 거리가 임계치 이하이면 충돌로 판정하는 저희 알고리즘에서는 충돌로 판정하지만 제대로 된 충돌점을 구할 수 없었습니다.
     그래서 이 경우에 구를 조금 더 이동하던 속도로 움직여 Penetrating이 되도록 한 다음 강제로 충돌점을 만들어 적용하려 했습니다.
     하지만 삼각형이 아닌 확장된 평면에 대해 충돌점을 구하다 보니 삼각형의 edge에 걸치도록 공을 떨어트릴 경우 충돌점을 edge옆으로 잡게 되어
-    올바로 충돌검사를 하지 못하는 케이스가 있었습니다.
+    충돌검사를 하지 못하는 케이스가 있었습니다.
     */
-    
+
     scalar Plane::AreaOfTriangle(Vector3d point1, Vector3d point2, Vector3d point3)
     {
-
         Vector3d P1 = point2 - point1;
         Vector3d P2 = point3 - point1;
         scalar Area = (P1.crossProduct(P2)).norm();

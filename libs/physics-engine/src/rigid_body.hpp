@@ -1,7 +1,7 @@
-/* 질점, 강체의 속성들은 책과 chris hacker를 참고하였습니다.
+/* 질점, 강체의 속성들은 책과 chris hacker를 참고하였습니다.  
    reference book : Physics modeling for game programmers
    publisher      : Thomson/Premier, 2004
-   ISBN           : 1592000932, 9781592000937 
+   ISBN           : 1592000932, 9781592000937  
 */
 
 #pragma once
