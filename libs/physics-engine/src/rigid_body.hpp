@@ -1,13 +1,24 @@
+/* 질점, 강체의 속성들은 책과 chris hacker를 참고하였습니다.
+   reference book : Physics modeling for game programmers
+   publisher      : Thomson/Premier, 2004
+   ISBN           : 1592000932, 9781592000937 
+*/
+
 #pragma once
 
 namespace pmframework
 {
-
     class RigidBody : public PointMass
     {
     private:
+        enum collision_state
+        {
+            Penetrating,
+            Colliding,
+            Clear
+        } collisionState;
+
         Matrix3x3 inverseBodyInertiaTensor;
-        scalar frictionCoefficient;
 
         struct configuration : public PointMass::configuration {
             Vector3d angularMomentum;
@@ -24,6 +35,9 @@ namespace pmframework
     public:
         PHYSICSENGINE_API RigidBody(void);
 
+        PHYSICSENGINE_API void CollisionState(collision_state state);
+        PHYSICSENGINE_API collision_state CollisionState(void);
+
         PHYSICSENGINE_API void Position(Vector3d positionCenterOfMass);
         PHYSICSENGINE_API Vector3d Position(int configurationIndex);
 
@@ -35,8 +49,6 @@ namespace pmframework
 
         PHYSICSENGINE_API virtual void InverseBodyInertiaTensor(Matrix3x3 inverseInertiaValue);
         PHYSICSENGINE_API virtual Matrix3x3 InverseBodyInertiaTensor(void);
-
-        PHYSICSENGINE_API virtual void FrictionCoefficient(scalar coefficient);
 
         PHYSICSENGINE_API virtual void AngularMomentum(Vector3d angularMomentumValue);
         PHYSICSENGINE_API virtual Vector3d AngularMomentum(int configurationIndex);
@@ -60,6 +72,15 @@ namespace pmframework
     inline RigidBody::RigidBody(void)
     {
 
+    }
+
+    inline void RigidBody::CollisionState(collision_state state)
+    {
+        collisionState = state;
+    }
+    inline RigidBody::collision_state RigidBody::CollisionState(void)
+    {
+        return collisionState;
     }
 
     inline void RigidBody::Position(Vector3d positionCenterOfMass)
@@ -101,8 +122,6 @@ namespace pmframework
     {
         return inverseBodyInertiaTensor;
     }
-
-    inline void RigidBody::FrictionCoefficient(scalar coefficient);
 
     inline void RigidBody::AngularMomentum(Vector3d angularMomentumValue)
     {
