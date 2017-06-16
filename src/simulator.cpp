@@ -91,9 +91,9 @@ void Camera::calculate()
     mat_ = mat_tmp * mat_;
 }
 
-void Simulator::Init(int w, int h, glm::vec3 pos, const char* title)
+void Simulator::Init(int w, int h, const char* title, int scale)
 {
-    instance = new Simulator(w, h, pos, title);
+    instance = new Simulator(w, h, title, scale);
 }
 
 void Simulator::Release()
@@ -207,10 +207,10 @@ void Simulator::mouse_mov_callback(double x, double y)
     curr_camera_.Update(pos, target, axis_horz);
 }
 
-Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
+Simulator::Simulator(int width, int height, const char *title, int scale)
     : width_(width)
     , height_(height)
-    , curr_camera_(pos, glm::vec3(-0.2, -0.1, -1.0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0))
+    , scale_(scale)
 {
     window_ = NULL;
 
@@ -242,7 +242,6 @@ Simulator::Simulator(int width, int height, glm::vec3 pos, const char *title)
     glFrontFace(GL_CCW);
     glPolygonMode(GL_FRONT, GL_FILL);
     glPolygonMode(GL_BACK, GL_FILL);
-
 
     proj_ = glm::mat4{ 2.41421, 0, 0, 0,
         0, 2.41421, 0, 0,
@@ -358,11 +357,19 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
         }
         else if (!strcmp(object.attribute("type").value(), "sphere")) {
             std::stringstream pos_ss(object.child("pos").first_child().value());
+            std::stringstream velo_ss(object.child("velocity").first_child().value());
+
             GLfloat radius = std::stof(object.child("radius").first_child().value());
             glm::vec3 pos;
+            glm::vec3 velo;
+            int mass;
+       
             pos_ss >> pos.x >> pos.y >> pos.z;
+            velo_ss >> velo.x >> velo.y >> velo.z;
+            
+            mass = std::stoi(object.child("mass").first_child().value());
             objects_.push_back(
-                std::unique_ptr<Object>(new Sphere(pos, radius))
+                std::unique_ptr<Object>(new Sphere(pos, radius, velo, mass))
             );
         }
     }
@@ -411,24 +418,23 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
                 faces_.back()[3] = textures_cnt_;
 
                 // HACK
-
+                
                 pmframework::Plane* plane = new pmframework::Plane();
 
-                pmframework::Vector3d vec1(vertices__[face->GetVertices()[0]].x,
-                    vertices__[face->GetVertices()[0]].y,
-                    vertices__[face->GetVertices()[0]].z);
+                pmframework::Vector3d vec1(vertices__[face->GetVertices()[0] + offset].x,
+                    vertices__[face->GetVertices()[0] + offset].y,
+                    vertices__[face->GetVertices()[0] + offset].z);
 
-                pmframework::Vector3d vec2(vertices__[face->GetVertices()[1]].x,
-                    vertices__[face->GetVertices()[1]].y,
-                    vertices__[face->GetVertices()[1]].z);
+                pmframework::Vector3d vec2(vertices__[face->GetVertices()[1] + offset].x,
+                    vertices__[face->GetVertices()[1] + offset].y,
+                    vertices__[face->GetVertices()[1] + offset].z);
 
-                pmframework::Vector3d vec3(vertices__[face->GetVertices()[2]].x,
-                    vertices__[face->GetVertices()[2]].y,
-                    vertices__[face->GetVertices()[2]].z);
+                pmframework::Vector3d vec3(vertices__[face->GetVertices()[2] + offset].x,
+                    vertices__[face->GetVertices()[2] + offset].y,
+                    vertices__[face->GetVertices()[2] + offset].z);
 
                 plane->SetPlane(vec1, vec2, vec3);
-
-                simulation_.AddPlane(plane);
+                simulation_.AddPlane(plane);   
             }
             offset = vertices__.size();
             offset_n = nvectors_.size();
@@ -443,24 +449,28 @@ void Simulator::load_objects(const pugi::xml_node& obj_list)
             // HACK
             glm::vec3 pos = sphere->GetPos();
 
-            pmframework::RigidBody* sphere = new pmframework::RigidBody();
+            pmframework::RigidBody* p_sphere = new pmframework::RigidBody();
 
-            sphere->Mass(10);
-            sphere->Position(pmframework::Vector3d(pos.x, pos.y, pos.z));
-            sphere->Restitution(0.8);
-            sphere->Velocity(pmframework::Vector3d(0, 0, -10));
-            sphere->RotationalInertia(pmframework::Vector3d(1, 2, 3));
+            p_sphere->Mass(sphere->GetMass());
+            p_sphere->Position(pmframework::Vector3d(pos.x, pos.y, pos.z));
+            p_sphere->Restitution(0.7);
+            p_sphere->Velocity(pmframework::Vector3d(sphere->GetVelocity().x,
+                sphere->GetVelocity().y, sphere->GetVelocity().z));
+            p_sphere->BoundingSphereRadius(sphere->GetRadius());
 
+
+            p_sphere->RotationalInertia(pmframework::Vector3d(1, 2, 3));
             pmframework::Matrix3x3 m;
-            m(0, 0) = (3.0 / sphere->Mass()) * (pos.y * pos.y + pos.z * pos.z);
-            m(1, 1) = (3.0 / sphere->Mass()) * (pos.x * pos.x + pos.z * pos.z);
-            m(2, 2) = (3.0 / sphere->Mass()) * (pos.x * pos.x + pos.y * pos.y);
+            m(0, 0) = (3.0 / p_sphere->Mass()) * (pos.y * pos.y + pos.z * pos.z);
+            m(1, 1) = (3.0 / p_sphere->Mass()) * (pos.x * pos.x + pos.z * pos.z);
+            m(2, 2) = (3.0 / p_sphere->Mass()) * (pos.x * pos.x + pos.y * pos.y);
 
-            sphere->InverseBodyInertiaTensor(m);
+            p_sphere->InverseBodyInertiaTensor(m);
+            p_sphere->AngularVelocity(pmframework::Vector3d(30, 3, 1));
 
-            simulation_.AddBody(sphere);
-            phy_spheres_.push_back(sphere);
-            
+            simulation_.AddBody(p_sphere);
+            phy_spheres_.push_back(p_sphere);
+
         }
         else {
         }
@@ -490,17 +500,24 @@ bool Simulator::initialize(const std::string& xml_url)
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file("config.xml");
 
+    glm::vec3 pos;
+    glm::vec3 target;
+
     auto simulator = doc.child("simulator");
     auto shader_list = simulator.child("shader-list");
     auto object_list = simulator.child("object-list");
 
-    int scale = simulator.attribute("scale").as_int();
-    scale_ = scale;
+    std::stringstream camera_pos_ss(simulator.child("camera-pos").first_child().value());
+    std::stringstream camera_target_ss(simulator.child("camera-target").first_child().value());
 
-    std::cout << "Scale : " << scale_ << std::endl << std::endl;
+    camera_pos_ss >> pos.x >> pos.y >> pos.z;
+    camera_target_ss >> target.x >> target.y >> target.z;
+
+    num_frames_ = simulator.attribute("frames").as_int();
+    curr_camera_ = Camera(pos / (float)scale_, target/(float)scale_, glm::vec3(0, 1, 0), glm::vec3(0, 0, 1));
 
     world_ = glm::mat4(0.0);
-    world_[0][0] = world_[1][1] = world_[2][2] = 1.0 / scale;
+    world_[0][0] = world_[1][1] = world_[2][2] = 1.0 / scale_;
     world_[3][3] = 1;
 
     load_shaders(shader_list);
@@ -552,7 +569,6 @@ bool Simulator::initialize(const std::string& xml_url)
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
 	glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(glm::vec3), &vertices_[0], GL_STATIC_DRAW);
 
-    buffer_for_save_ = new unsigned char[width_ * height_ * 3];
     
     file_header_.bfType = 0x4D42;
     file_header_.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + (width_ * height_ * 3);
@@ -581,26 +597,35 @@ void Simulator::Start()
 void Simulator::start()
 {
     // TODO : Check config.xml
-    for (int i = 0; i < 300; i++) 
+    for (int i = 0; i < num_frames_; i++) 
     {
         compute();
         render();
         save(i);
         glfwSwapBuffers(window_);
+        system("cls");
+        std::cout << "(" << i << "/" << num_frames_ << ") complete...";
         simulate();
     }
 }
 
 void Simulator::simulate()
 {
-    simulation_.SimulateUnitTime(0.02);
+    pmframework::Vector3d vec1, vec2, vec3;
+
+    pmframework::Plane* plane = new pmframework::Plane();
+    plane->SetPlane(vec1, vec2, vec3);
+    simulation_.AddPlane(plane);
+
+    simulation_.SimulateUnitTime(FRAME_INTERVAL);
+
     // HACK
+    
     for (int i = 0; i < spheres_.size(); i++) {
         spheres_[i].x = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).X();
         spheres_[i].y = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).Y();
         spheres_[i].z = phy_spheres_[i]->Position(simulation_.SourceConfiguration()).Z();
-        std::cout << i << " : ";
-        print_vec(spheres_[i]);
+        pmframework::RigidBody* ball1 = phy_spheres_[i];
     }
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, spheres_ssbo_);
@@ -608,6 +633,9 @@ void Simulator::simulate()
         spheres_.size() * sizeof(glm::vec4), &spheres_[0], GL_DYNAMIC_COPY);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void Simulator::process_input()
@@ -730,15 +758,30 @@ void Simulator::render()
 void Simulator::save(int idx)
 {
     std::string file_name = "result" + std::to_string(idx) + ".bmp";
-    FILE *file = fopen(file_name.data(), "w");
-    glReadPixels(0, 0, width_, height_, GL_RGB, GL_UNSIGNED_BYTE, buffer_for_save_);
 
-    fwrite(&file_header_, 1, sizeof(BITMAPFILEHEADER), file);
-    fwrite(&info_header_, 1, sizeof(BITMAPINFOHEADER), file);
-    fwrite(buffer_for_save_, 1, width_ * height_ * 3, file);
+    FILE *file = fopen(file_name.data(), "w");
     
-    fclose(file);
+    memset(buffer_for_save_, 0, 1024 * 1024 * 3);
+    
+    glReadPixels(0, 0, width_, height_, GL_BGR, GL_UNSIGNED_BYTE, buffer_for_save_);
+
+    // SUPER HACK
+    for (int i = 0; i < 1024; i++) {
+        for (int j = 0; j < 1024; j++) {
+            for (int l = 0; l < 3; l++) {
+                if (buffer_for_save_[i * 1024 * 3 + j * 3 + l] < 11) buffer_for_save_[i * 1024 * 3 + j * 3 + l] = 0;
+            }
+        }
+    }
+    
+    fwrite(&file_header_, sizeof(char), sizeof(BITMAPFILEHEADER), file);
+    fwrite(&info_header_, sizeof(char), sizeof(BITMAPINFOHEADER), file);
+
+    fwrite(buffer_for_save_, sizeof(unsigned char), 1024 * 1024 * 3, file);
+
+    fclose(file);    
 }
+
 
 bool Simulator::check_program()
 {

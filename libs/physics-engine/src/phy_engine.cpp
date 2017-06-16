@@ -1,4 +1,5 @@
 #include "pmframework.hpp"
+<<<<<<< HEAD
 
 /* simulation의 전체적인 흐름은 chris hacker를 참고하였습니다.
 * http://chrishecker.com/images/e/e7/Gdmphys3.pdf
@@ -13,6 +14,9 @@
 구와 평면의 충돌은 SAT를 통해 검출하였고, resolve는 함수의 정의부분에 있는 url을 참조하여 계산하였습니다.
 */
 
+=======
+/*Fix start!*/
+>>>>>>> origin/master
 namespace pmframework
 {
     Vector3d gravity(0, -9.8f, 0);
@@ -49,6 +53,11 @@ namespace pmframework
 
             Integrate(targetTime - currentTime);
 
+<<<<<<< HEAD
+=======
+            //CheckForCollisions(targetConfigurationIndex);
+
+>>>>>>> origin/master
             if (CheckForCollisions(targetConfigurationIndex) == RigidBody::Penetrating)
             {
                 printf("!");
@@ -98,13 +107,21 @@ namespace pmframework
             RigidBody::configuration &Target = Balls[i]->aConfiguration[targetConfigurationIndex];
 
             //HACK
+<<<<<<< HEAD
             if (Balls[i]->collisionState != RigidBody::Clear) Source.velocity *= frictionCoefficient;
+=======
+            if (Balls[Counter]->collisionState != RigidBody::Clear) Source.velocity *= frictionCoefficient;
+>>>>>>> origin/master
 
             Target.position = Source.position + DeltaTime * Source.velocity;
 
             Target.orientation = Source.orientation + DeltaTime * Matrix3x3(Source.angularVelocity, Matrix3x3::SkewSymmetric) * Source.orientation;
 
             Target.velocity = Source.velocity + (DeltaTime / Balls[i]->mass) * Source.sumForce;
+
+            if ((Source.velocity.Y() < 0.0000011f || Source.velocity.Y() < 0) && 0.000001f < Target.velocity.Y() && Target.velocity.Y() < 0.8f) {
+                Target.velocity.Y(0.0000011f);
+            }
 
             if ((Source.velocity.Y() < 0.0000011f || Source.velocity.Y() < 0) && 0.000001f < Target.velocity.Y() && Target.velocity.Y() < 0.8f) {
                 Target.velocity.Y(0.0000011f);
@@ -159,7 +176,11 @@ namespace pmframework
                 }
             }
 
+<<<<<<< HEAD
             for (int j = 0; j < Walls.size(); ++j) {
+=======
+            for (int WallIndex = 0; WallIndex < Walls.size(); WallIndex++) {
+>>>>>>> origin/master
 
                 Plane *wall = Walls[j];
 
@@ -172,10 +193,17 @@ namespace pmframework
                     if (colliding) {
                         Body1->collisionState = RigidBody::Penetrating;
                         return RigidBody::Penetrating;
+<<<<<<< HEAD
+=======
+                    }
+                    else {
+                        //a sphere collides with the expanded trangle
+>>>>>>> origin/master
                     }
                 }
                 else {
                     if (distance < DepthEpsilon) {
+<<<<<<< HEAD
                         /*
                         Vector3d vv = -(distance + 0.01) * wall->NormalVector();
                         Configuration1.position += vv;
@@ -186,6 +214,16 @@ namespace pmframework
                         Configuration1.position -= vv;*/
                         colliding = wall->CollisionInTriangle(collisionPoint);
 
+=======
+                        Vector3d vv = -(distance + 0.01) * wall->NormalVector();
+
+
+                        Configuration1.position += vv;
+                        scalar arar = wall->DistanceFromPoint(Configuration1.position) - Body1->BoundingSphereRadius();
+                        colliding = (!(wall->SeperatingAxisTest(Body1, ConfigurationIndex)));
+
+                        Configuration1.position -= vv;
+>>>>>>> origin/master
                         if (colliding) {
                             Vector3d center = Configuration1.position;
                             scalar t = -(wall->NormalVector().dotProduct(Configuration1.position) + wall->D()) / wall->NormalVector().normSquared();
@@ -277,12 +315,22 @@ namespace pmframework
 
         Vector3d impulse = (impulseNumerator / impulseDenominator) * collisionNormal;
 
+<<<<<<< HEAD
         Configuration.velocity += ((1.0f) / ball->mass) * impulse;
+=======
+        Configuration.velocity += ((1.0f) / ball->mass) * Impulse;
+>>>>>>> origin/master
 
         //HACK
         scalar prevVelocity = ball->aConfiguration[sourceConfigurationIndex].velocity.Y();
         if ((prevVelocity < 0.0000011f || prevVelocity<0) && 0.000001f < Configuration.velocity.Y() && Configuration.velocity.Y() < 0.8f) {
             Configuration.velocity.Y(0.0000011f);
         }
+<<<<<<< HEAD
+=======
+
+        Configuration.angularMomentum += R.crossProduct(Impulse);
+        Configuration.angularVelocity = Configuration.inverseWorldInertiaTensor * Configuration.angularMomentum;
+>>>>>>> origin/master
     }
 }

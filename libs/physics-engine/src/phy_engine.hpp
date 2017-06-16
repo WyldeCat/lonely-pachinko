@@ -21,6 +21,15 @@ namespace pmframework
         PHYSICSENGINE_API void AddPlane(Plane *plane);
 
     private:
+<<<<<<< HEAD
+=======
+        /*enum collision_state
+        {
+            Penetrating,
+            Colliding,
+            Clear
+        } collisionState;*/
+>>>>>>> origin/master
 
         enum collision_type
         {

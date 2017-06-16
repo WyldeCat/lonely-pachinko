@@ -27,6 +27,7 @@ namespace pmframework
         return distance;
     }
 
+<<<<<<< HEAD
     /*구와 삼각형간의 sphere-triangle separate axis test입니다.
     구와 평면(무한한)의 충돌검사는 쉬웠는데 모든 mesh가 삼각형이다보니 충돌검출에서 어려움이 있었습니다.
     그러던 중 어느 글에서 SAT를 통해 구와 삼각형의 충돌검사를 하는 것을 보고 프로젝트를 하며 SAT는 볼록 다각형간의
@@ -44,6 +45,9 @@ namespace pmframework
 
     */
     bool Plane::SeperatingAxisTest(RigidBody* sphere, int config)
+=======
+    bool Plane::SeperatingAxisTest(RigidBody* sphere, int config) // 7-separate check
+>>>>>>> origin/master
     {
         Vector3d A = point1 - sphere->Position(config);
         Vector3d B = point2 - sphere->Position(config);
