@@ -9,3 +9,5 @@ references list
 * http://chrishecker.com/Rigid_Body_Dynamics
 
 * http://gafferongames.com/virtual-go/collision-response-and-coulomb-friction/
+
+* http://realtimecollisiondetection.net/blog/?p=103
