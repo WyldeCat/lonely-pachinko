@@ -1,0 +1,13 @@
+references list
+
+* Title     : Physics Modeling for Game Programmers
+  publisher : Thomson/Premier, 2004
+  ISBN      : 1592000932, 9781592000937
+
+* http://chrishecker.com/images/e/e7/Gdmphys3.pdf
+
+* http://chrishecker.com/Rigid_Body_Dynamics
+
+* http://gafferongames.com/virtual-go/collision-response-and-coulomb-friction/
+
+* http://realtimecollisiondetection.net/blog/?p=103

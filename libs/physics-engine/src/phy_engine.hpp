@@ -1,6 +1,5 @@
 #pragma once
 #include "pmframework.hpp"
-
 #include <vector>
 
 namespace pmframework
@@ -22,12 +21,6 @@ namespace pmframework
         PHYSICSENGINE_API void AddPlane(Plane *plane);
 
     private:
-        /*enum collision_state
-        {
-            Penetrating,
-            Colliding,
-            Clear
-        } collisionState;*/
 
         enum collision_type
         {

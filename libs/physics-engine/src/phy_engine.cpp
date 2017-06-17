@@ -1,5 +1,18 @@
 #include "pmframework.hpp"
-/*Fix start!*/
+
+/* simulation의 전체적인 흐름은 chris hacker를 참고하였습니다. 
+* http://chrishecker.com/images/e/e7/Gdmphys3.pdf
+* http://chrishecker.com/Rigid_Body_Dynamics
+저희의 project에 맞춰서 sphere, plane class에 대하여 추가하고 수정하였습니다
+마찰과 같은 효과를 주었고, 표면과의 지속적인 충돌로 인한 약간의 진동현상을 제거하였습니다
+처음에는 구의 표면에 몇개의 질점을 두어 회전 운동을 적용하려 하였지만
+결국 구의 중심에만 적용하였고 모든 운동은 병점운동이 되도록 계산하였습니다.
+
+구와 구의 충돌은 간단히 반지름과 거리로 검출하였고, resolve는 구와 평면의 resolve와 똑같은 식으로 계산하였는데
+버그를 잡지 못하여 더 간단하게 충격량을 계산하였습니다.
+구와 평면의 충돌은 SAT를 통해 검출하였고, resolve는 함수의 정의부분에 있는 url을 참조하여 계산하였습니다.
+*/
+
 namespace pmframework
 {
     Vector3d gravity(0, -9.8f, 0);
@@ -20,9 +33,9 @@ namespace pmframework
     void Simulation::Simulate(scalar time)
     {
         scalar timeSum = 0.0f;
-        scalar unitTime = 0.033f;
-        for (; timeSum <= time; timeSum += 0.033f) {
-            SimulateUnitTime(0.033f);
+        scalar unitTime = 0.02f;
+        for (; timeSum <= time; timeSum += 0.02f) {
+            SimulateUnitTime(0.02f);
         }
     }
 
@@ -36,14 +49,10 @@ namespace pmframework
 
             Integrate(targetTime - currentTime);
 
-            //CheckForCollisions(targetConfigurationIndex);
-
             if (CheckForCollisions(targetConfigurationIndex) == RigidBody::Penetrating)
             {
                 printf("!");
                 targetTime = (currentTime + targetTime) / 2.0;
-
-                //assert(fabs(targetTime - currentTime) > SCALAR_TOLERANCE);
             }
             else
             {
@@ -62,11 +71,11 @@ namespace pmframework
 
     void Simulation::ComputeForces(int ConfigurationIndex)
     {
-        int Counter;
+        int i;
 
-        for (Counter = 0; Counter < Balls.size(); Counter++)
+        for (i = 0; i < Balls.size(); i++)
         {
-            RigidBody* Body = Balls[Counter];
+            RigidBody* Body = Balls[i];
             RigidBody::configuration &Configuration = Body->aConfiguration[ConfigurationIndex];
 
             Configuration.sumForce = Vector3d(0, 0, 0);
@@ -81,21 +90,21 @@ namespace pmframework
 
     void Simulation::Integrate(scalar DeltaTime)
     {
-        int Counter;
+        int i;
 
-        for (Counter = 0; Counter < Balls.size(); Counter++)
+        for (i = 0; i < Balls.size(); ++i)
         {
-            RigidBody::configuration &Source = Balls[Counter]->aConfiguration[sourceConfigurationIndex];
-            RigidBody::configuration &Target = Balls[Counter]->aConfiguration[targetConfigurationIndex];
+            RigidBody::configuration &Source = Balls[i]->aConfiguration[sourceConfigurationIndex];
+            RigidBody::configuration &Target = Balls[i]->aConfiguration[targetConfigurationIndex];
 
             //HACK
-            if (Balls[Counter]->collisionState != RigidBody::Clear) Source.velocity *= frictionCoefficient;
+            if (Balls[i]->collisionState != RigidBody::Clear) Source.velocity *= frictionCoefficient;
 
             Target.position = Source.position + DeltaTime * Source.velocity;
 
             Target.orientation = Source.orientation + DeltaTime * Matrix3x3(Source.angularVelocity, Matrix3x3::SkewSymmetric) * Source.orientation;
 
-            Target.velocity = Source.velocity + (DeltaTime / Balls[Counter]->mass) * Source.sumForce;
+            Target.velocity = Source.velocity + (DeltaTime / Balls[i]->mass) * Source.sumForce;
 
             if ((Source.velocity.Y() < 0.0000011f || Source.velocity.Y() < 0) && 0.000001f < Target.velocity.Y() && Target.velocity.Y() < 0.8f) {
                 Target.velocity.Y(0.0000011f);
@@ -105,7 +114,7 @@ namespace pmframework
 
             OrthonormalizeOrientation(Target.orientation);
 
-            Target.inverseWorldInertiaTensor = Target.orientation * Balls[Counter]->inverseBodyInertiaTensor * Transpose(Target.orientation);
+            Target.inverseWorldInertiaTensor = Target.orientation * Balls[i]->inverseBodyInertiaTensor * Transpose(Target.orientation);
 
             Target.angularVelocity = Target.inverseWorldInertiaTensor * Target.angularMomentum;
         }
@@ -150,9 +159,9 @@ namespace pmframework
                 }
             }
 
-            for (int WallIndex = 0; WallIndex < Walls.size(); WallIndex++) {
+            for (int j = 0; j < Walls.size(); ++j) {
 
-                Plane *wall = Walls[WallIndex];
+                Plane *wall = Walls[j];
 
                 scalar distance = wall->DistanceFromPoint(Configuration1.position) - Body1->BoundingSphereRadius();
 
@@ -164,20 +173,19 @@ namespace pmframework
                         Body1->collisionState = RigidBody::Penetrating;
                         return RigidBody::Penetrating;
                     }
-                    else {
-                        //a sphere collides with the expanded trangle
-                    }
                 }
                 else {
                     if (distance < DepthEpsilon) {
+                        /*
                         Vector3d vv = -(distance + 0.01) * wall->NormalVector();
-
-
                         Configuration1.position += vv;
-                        scalar arar = wall->DistanceFromPoint(Configuration1.position) - Body1->BoundingSphereRadius();
-                        colliding = (!(wall->SeperatingAxisTest(Body1, ConfigurationIndex)));
+                        Vector3d center = Configuration1.position;
+                        scalar t = -(wall->NormalVector().dotProduct(Configuration1.position) + wall->D()) / wall->NormalVector().normSquared();
+                        collisionPoint = Vector3d(wall->A()*t + center.X(), wall->B()*t + center.Y(), wall->C()*t + center.Z());
+                        colliding = wall->CollisionInTriangle(collisionPoint);
+                        Configuration1.position -= vv;*/
+                        colliding = wall->CollisionInTriangle(collisionPoint);
 
-                        Configuration1.position -= vv;
                         if (colliding) {
                             Vector3d center = Configuration1.position;
                             scalar t = -(wall->NormalVector().dotProduct(Configuration1.position) + wall->D()) / wall->NormalVector().normSquared();
@@ -186,13 +194,10 @@ namespace pmframework
                             collisionType = SpherePlane;
                             collisionNormal = wall->NormalVector();
                             collisionBodyIndex1 = i;
-                            collisionPlaneIndex = WallIndex;
+                            collisionPlaneIndex = j;
 
                             ResolveSpherePlaneCollisions(collisionPoint, ConfigurationIndex);
 
-                        }
-                        else {
-                            // @todo more check
                         }
                     }
                 }
@@ -202,6 +207,7 @@ namespace pmframework
         if (collisionType != None) return RigidBody::Colliding;
     }
 
+    // http://gafferongames.com/virtual-go/collision-response-and-coulomb-friction/ 의 중간에 있는 식을 참고하였습니다.
     void Simulation::ResolveSphereSphereCollisions(int configurationIndex)
     {
 
@@ -209,48 +215,71 @@ namespace pmframework
         RigidBody *ball2 = Balls[collisionBodyIndex2];
         RigidBody::configuration &Configuration1 = ball1->aConfiguration[configurationIndex];
         RigidBody::configuration &Configuration2 = ball2->aConfiguration[configurationIndex];
+        /*
+        Vector3d v = Configuration1.velocity - Configuration2.velocity;
 
-        scalar im1 = 1.0 / ball1->Mass();
-        scalar im2 = 1.0 / ball2->Mass();
+        scalar inv_m1 = 1.0 / ball1->Mass();
+        Vector3d r1 = collisionPoint - Configuration1.position;
+        Vector3d rr1 = ball1->inverseBodyInertiaTensor * r1.crossProduct(collisionNormal);
+
+        scalar inv_m2 = 1.0 / ball2->Mass();
+        Vector3d r2 = collisionPoint - Configuration2.position;
+        Vector3d rr2 = ball2->inverseBodyInertiaTensor * r2.crossProduct(collisionNormal);
+
+        scalar impulseDenominator = inv_m1 + inv_m2 + (rr1.crossProduct(r1) + rr2.crossProduct(r2)).dotProduct(collisionNormal);
+
+        scalar j1 = (v * (-(1.0 + ball1->restitution))).dotProduct(v) / impulseDenominator;
+        scalar j2 = (v * (-(1.0 + ball1->restitution))).dotProduct(v) / impulseDenominator;
+
+        Vector3d impulse1 = collisionNormal * j1;
+        Vector3d impulse2 = collisionNormal * j2;
+        Configuration1.velocity += impulse1 *inv_m1;
+        Configuration2.velocity -= impulse2 *inv_m2;
+        */
+        //bug를 잡지 못하여 더 간단하게 구하였습니다.
+        scalar inv_m1 = 1.0 / ball1->Mass();
+        scalar inv_m2 = 1.0 / ball2->Mass();
         Vector3d v = Configuration1.velocity - Configuration2.velocity;
         scalar vn = v.dotProduct(collisionNormal);
+        scalar nn = collisionNormal.dotProduct(collisionNormal);
 
-        scalar i = (-(1.0 + 0.9) * vn) / (im1 + im2);
-        Vector3d impulse = collisionNormal * i;
-        Configuration1.velocity += impulse *im1;
-        Configuration2.velocity -= impulse *im2;
+        scalar j1 = (-(1.0 + ball1->restitution) * vn) / (nn*(inv_m1 + inv_m2));
+        scalar j2 = (-(1.0 + ball1->restitution) * vn) / (nn*(inv_m1 + inv_m2));
+        Vector3d impulse1 = collisionNormal * j1;
+        Vector3d impulse2 = collisionNormal * j2;
+        Configuration1.velocity += impulse1 *inv_m1;
+        Configuration2.velocity -= impulse2 *inv_m2;
 
     }
 
+    // http://gafferongames.com/virtual-go/collision-response-and-coulomb-friction/ 의 중간에 있는 식을 참고하였습니다.
+    // 공과 plane의 충돌이므로 평면의 속도를 0, 질량을 무한대로 설정하여줌으로 써 아래와 같이 간단히 계산할 수 있습니다.
 
     void Simulation::ResolveSpherePlaneCollisions(Vector3d CollisionPoint, int configurationIndex)
     {
         RigidBody *ball = Balls[collisionBodyIndex1];
         RigidBody::configuration &Configuration = ball->aConfiguration[configurationIndex];
 
-        Vector3d Position = CollisionPoint;
+        Vector3d p = CollisionPoint;
 
-        Vector3d R = (Position - Configuration.position);
+        Vector3d r = (p - Configuration.position);
 
-        Vector3d Velocity = Configuration.velocity + Configuration.angularVelocity.crossProduct(R);
+        Vector3d v = Configuration.velocity;
 
-        scalar ImpulseNumerator = -((1.0f) + ball->restitution) * Velocity.dotProduct(collisionNormal);
+        scalar impulseNumerator = -((1.0f) + ball->restitution) * v.dotProduct(collisionNormal);
 
-        Vector3d RR = Configuration.inverseWorldInertiaTensor * R.crossProduct(collisionNormal);
+        Vector3d rr = ball->inverseBodyInertiaTensor * r.crossProduct(collisionNormal);
 
-        scalar ImpulseDenominator = ((1.0f) / ball->mass) + collisionNormal.dotProduct(RR.crossProduct(R));
+        scalar impulseDenominator = ((1.0f) / ball->mass) + collisionNormal.dotProduct(rr.crossProduct(r));
 
-        Vector3d Impulse = (ImpulseNumerator / ImpulseDenominator) * collisionNormal;
+        Vector3d impulse = (impulseNumerator / impulseDenominator) * collisionNormal;
 
-        Configuration.velocity += ((1.0f) / ball->mass) * Impulse;
+        Configuration.velocity += ((1.0f) / ball->mass) * impulse;
 
         //HACK
         scalar prevVelocity = ball->aConfiguration[sourceConfigurationIndex].velocity.Y();
         if ((prevVelocity < 0.0000011f || prevVelocity<0) && 0.000001f < Configuration.velocity.Y() && Configuration.velocity.Y() < 0.8f) {
             Configuration.velocity.Y(0.0000011f);
         }
-
-        Configuration.angularMomentum += R.crossProduct(Impulse);
-        Configuration.angularVelocity = Configuration.inverseWorldInertiaTensor * Configuration.angularMomentum;
     }
 }

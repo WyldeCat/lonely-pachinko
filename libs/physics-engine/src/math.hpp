@@ -2,7 +2,6 @@
 
 namespace pmframework
 {
-
     const float SCALAR_TOLERANCE = 0.000001f;
     const float PI = 3.14159265358979f;
     typedef float scalar;
@@ -210,8 +209,7 @@ namespace pmframework
     }
 
 
-
-
+    // matrix3x3 class의 함수들은 chris hacker를 참조하였습니다.
 
     class Matrix3x3
     {
@@ -233,11 +231,6 @@ namespace pmframework
         PHYSICSENGINE_API inline Matrix3x3 &SetElement(int Row, int Column, scalar Value);
 
     protected:
-
-        enum do_not_initialize { DoNotInitialize };
-
-        PHYSICSENGINE_API inline Matrix3x3(do_not_initialize);
-
         scalar aElements[3][3];
     };
 
@@ -266,10 +259,6 @@ namespace pmframework
         aElements[Row][Column] = Value;
 
         return *this;
-    }
-
-    inline Matrix3x3::Matrix3x3(do_not_initialize)
-    {
     }
 
     inline Matrix3x3::Matrix3x3(scalar(*pElements)[3])
@@ -373,7 +362,6 @@ namespace pmframework
     {
         for (int Counter = 0; Counter < 3; Counter++)
         {
-            // @todo this is probably the wrong order, but I'm lazy
             aElements[0][Counter] += Operand1(0, Counter);
             aElements[1][Counter] += Operand1(1, Counter);
             aElements[2][Counter] += Operand1(2, Counter);
