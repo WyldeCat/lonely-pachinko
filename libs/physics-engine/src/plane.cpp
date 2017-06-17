@@ -42,7 +42,7 @@ namespace pmframework
     참고한 글에 따르면 분리축 검사를 해야하는 후보가 되는 축들은 아래와 같이 일곱가지가 있습니다.
     -삼각형의 normal(1가지)
     -구의 중심을 지나며 각 삼각형의 변에 수직 (3가지)
-    -구의 중심을 지나며 각 삼각형의 꼭지점을 지나는 축(3가지)
+    -구의 중심을 지나며 각 삼각형의 꼭지점을 지나는 축(3가지) 
 
     */
     bool Plane::SeperatingAxisTest(RigidBody* sphere, int config)
